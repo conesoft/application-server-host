@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>Conesoft.Host</AssemblyName>
+    <RootNamespace>Conesoft.Host</RootNamespace>
+    <ApplicationIcon>Server.Light.ico</ApplicationIcon>
+    <Authors>davepermen</Authors>
+    <Company>Conesoft</Company>
+    <UserSecretsId>df8fd857-8c81-4dc7-b42d-26a446ffe578</UserSecretsId>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Conesoft.DNSimple" Version="1.0.6" />
+    <PackageReference Include="Conesoft.Files" Version="1.5.3" />
+    <PackageReference Include="Conesoft.Ipify" Version="1.0.1" />
+    <PackageReference Include="Conesoft.LetsEncrypt" Version="1.0.3" />
+    <PackageReference Include="JsonByExampleGenerator" Version="0.8.4" />
+    <PackageReference Include="MahApps.Metro" Version="2.4.5" />
+    <PackageReference Include="Yarp.ReverseProxy" Version="1.0.0-preview.11.21223.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Server.*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AdditionalFiles>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="App.xaml" />
+  </ItemGroup>
+</Project>

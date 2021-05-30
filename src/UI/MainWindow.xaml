@@ -1,0 +1,58 @@
+﻿<mah:MetroWindow x:Class="Conesoft.Host.UI.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+                 mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
+        ShowTitleBar="False"
+        Title="Host" Height="960" Width="640" Background="{DynamicResource MahApps.Brushes.SystemControlBackgroundAltHigh}" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}">
+    <Grid>
+        <Grid Margin="64">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Margin="16" FontSize="48">Conesoft Host</TextBlock>
+            
+            <ItemsControl Grid.Row="1" ItemsSource="{Binding Domains}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ItemsControl ItemsSource="{Binding Subdomains}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <mah:Tile Title="{Binding RelevantDomainPart, StringFormat='go to {0}'}"
+                                        Margin="3"
+                                        mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
+                                        Background="{DynamicResource MahApps.Brushes.Accent}"
+                                        HorizontalTitleAlignment="Right"
+                                        Tag="{Binding FullDomain}"
+                                        Click="Tile_Click">
+                                    </mah:Tile>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Margin="16"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            
+            <WrapPanel Grid.Row="2" Margin="16">
+                <mah:Tile Title="shut down host"
+                    Margin="3"
+                    mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
+                    Background="{DynamicResource MahApps.Brushes.Accent2}"
+                    HorizontalTitleAlignment="Right"
+                    Click="Tile_ShutDownHost_Click">
+                </mah:Tile>
+            </WrapPanel>
+        </Grid>
+    </Grid>
+</mah:MetroWindow>
