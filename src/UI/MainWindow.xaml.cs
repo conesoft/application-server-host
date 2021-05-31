@@ -77,9 +77,11 @@ namespace Conesoft.Host.UI
             });
         }
 
-        private void Tile_ShutDownHost_Click(object sender, RoutedEventArgs e)
+        private void Tile_ShutDownHost_Click(object sender, RoutedEventArgs e) => Close();
+
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e) => Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri)
         {
-            Close();
-        }
+            UseShellExecute = true,
+        });
     }
 }
