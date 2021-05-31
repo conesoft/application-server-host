@@ -12,7 +12,7 @@
     <Company>Conesoft</Company>
     <UserSecretsId>df8fd857-8c81-4dc7-b42d-26a446ffe578</UserSecretsId>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Conesoft.DNSimple" Version="1.0.6" />
     <PackageReference Include="Conesoft.Files" Version="1.5.3" />
@@ -24,18 +24,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Server.*.*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
     <AdditionalFiles Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </AdditionalFiles>
   </ItemGroup>
 
   <ItemGroup>
-    <Page Include="App.xaml" />
+    <Resource Include="Icons\*.*" />
   </ItemGroup>
 </Project>

@@ -9,6 +9,27 @@
         ShowTitleBar="False"
         Title="Host" Height="960" Width="640" Background="{DynamicResource MahApps.Brushes.SystemControlBackgroundAltHigh}" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}">
     <Grid>
+        <Image x:Name="DarkBackground" VerticalAlignment="Bottom"
+               HorizontalAlignment="Right"
+               Margin="-200 -100"
+               Width="600"
+               Opacity="0.2"
+               Source="/Icons/Conesoft.Light.png">
+            <Image.Effect>
+                <BlurEffect Radius="20"/>
+            </Image.Effect>
+        </Image>
+        <Image x:Name="LightBackground" VerticalAlignment="Bottom"
+               HorizontalAlignment="Right"
+               Margin="-200 -100"
+               Width="600"
+               Opacity="0.2"
+               Source="/Icons/Conesoft.Dark.png">
+            <Image.Effect>
+                <BlurEffect Radius="20"/>
+            </Image.Effect>
+        </Image>
+
         <Grid Margin="64">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
@@ -28,6 +49,7 @@
                                         Margin="3"
                                         mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
                                         Background="{DynamicResource MahApps.Brushes.Accent}"
+                                              Opacity="1"
                                         HorizontalTitleAlignment="Right"
                                         Tag="{Binding FullDomain}"
                                         Click="Tile_Click">
@@ -43,7 +65,7 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-            
+
             <WrapPanel Grid.Row="2" Margin="16">
                 <mah:Tile Title="shut down host"
                     Margin="3"
