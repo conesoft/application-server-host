@@ -31,8 +31,8 @@ namespace Conesoft.Host.UI
         {
             Icon = theme.BaseColorScheme switch
             {
-                "Light" => new BitmapImage(new Uri("Server.Dark.png", UriKind.Relative)),
-                "Dark" => new BitmapImage(new Uri("Server.Light.png", UriKind.Relative)),
+                "Light" => new BitmapImage(new Uri("Icons/Conesoft.Dark.png", UriKind.Relative)),
+                "Dark" => new BitmapImage(new Uri("Icons/Conesoft.Light.png", UriKind.Relative)),
                 _ => new BitmapImage()
             };
             trayIcon.UpdateTheme(theme.BaseColorScheme);
