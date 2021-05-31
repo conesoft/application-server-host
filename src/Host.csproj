@@ -7,7 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>Conesoft.Host</AssemblyName>
     <RootNamespace>Conesoft.Host</RootNamespace>
-    <ApplicationIcon>Icons/Conesoft.Light.ico</ApplicationIcon>
+    <ApplicationIcon>Icons/Server.Dark.ico</ApplicationIcon>
     <Authors>davepermen</Authors>
     <Company>Conesoft</Company>
     <UserSecretsId>df8fd857-8c81-4dc7-b42d-26a446ffe578</UserSecretsId>

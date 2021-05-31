@@ -16,8 +16,8 @@ namespace Conesoft.Host.UI
         string theme;
         Icon IconFromTheme => theme switch
         {
-            "Light" => new Icon("Icons/Conesoft.Dark.ico"),
-            "Dark" => new Icon("Icons/Conesoft.Light.ico"),
+            "Light" => new Icon("Icons/Server.Dark.ico"),
+            "Dark" => new Icon("Icons/Server.Light.ico"),
             _ => null
         };
 
