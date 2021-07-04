@@ -7,7 +7,7 @@
                  mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
         ShowTitleBar="False"
-        Title="Host" Height="960" Width="640" Background="{DynamicResource MahApps.Brushes.SystemControlBackgroundAltHigh}" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}">
+        Title="Host" Height="920" Width="1240" Background="{DynamicResource MahApps.Brushes.SystemControlBackgroundAltHigh}" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}">
     <Grid>
         <Image VerticalAlignment="Bottom"
                HorizontalAlignment="Right"
@@ -45,15 +45,29 @@
                 <RowDefinition Height="auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Margin="16" FontSize="48">Conesoft Host</TextBlock>
             
-            <ItemsControl Grid.Row="1" ItemsSource="{Binding Domains}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <ItemsControl ItemsSource="{Binding Subdomains}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <mah:Tile Title="{Binding RelevantDomainPart, StringFormat='go to {0}'}"
+            <TextBlock Grid.Row="0" Margin="16" FontSize="48">Conesoft Host</TextBlock>
+
+            <Grid Grid.Row="1" Margin="16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition MaxWidth="360" Width="*"/>
+                    <ColumnDefinition MaxWidth="360" Width="*"/>
+                    <ColumnDefinition MaxWidth="360" Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" FontSize="32">Websites</TextBlock>
+
+                <ItemsControl Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Domains}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ItemsControl ItemsSource="{Binding Subdomains}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <mah:Tile Title="{Binding RelevantDomainPart, StringFormat='go to {0}'}"
                                         Margin="3"
                                         mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
                                         Background="{DynamicResource MahApps.Brushes.Accent}"
@@ -61,28 +75,50 @@
                                         HorizontalTitleAlignment="Right"
                                         Tag="{Binding FullDomain}"
                                         Click="Tile_Click">
-                                    </mah:Tile>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Margin="16"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                                        </mah:Tile>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Margin="0 16"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-            <WrapPanel Grid.Row="2" Margin="16">
-                <mah:Tile Title="shut down host"
+                <TextBlock Grid.Row="0" Grid.Column="1" FontSize="32">Services</TextBlock>
+
+                <WrapPanel Grid.Row="1" Grid.Column="1" Margin="0 16">
+                    <ItemsControl ItemsSource="{Binding Services}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <mah:Tile Title="{Binding Name}"
+                            Margin="3"
+                            mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
+                            Background="{DynamicResource MahApps.Brushes.Accent2}"
+                                    Opacity="1"
+                            HorizontalTitleAlignment="Right"
+                            Tag="{Binding Name}">
+                                </mah:Tile>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </WrapPanel>
+
+                <TextBlock Grid.Row="0" Grid.Column="2" FontSize="32">System</TextBlock>
+
+                <WrapPanel Grid.Row="1" Grid.Column="2" Margin="0 16">
+                    <mah:Tile Title="shut down host"
                     Margin="3"
                     mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                    Background="{DynamicResource MahApps.Brushes.Accent2}"
+                    Background="{DynamicResource MahApps.Brushes.Accent3}"
                     HorizontalTitleAlignment="Right"
                     Click="Tile_ShutDownHost_Click">
-                </mah:Tile>
-            </WrapPanel>
+                    </mah:Tile>
+                </WrapPanel>
+            </Grid>
         </Grid>
     </Grid>
 </mah:MetroWindow>

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
-using Yarp.ReverseProxy.Service.Proxy;
+using Yarp.ReverseProxy.Forwarder;
 
 namespace Conesoft.Host.Web
 {
@@ -21,9 +21,9 @@ namespace Conesoft.Host.Web
             services.AddHosting();
         }
 
-        public void Configure(IApplicationBuilder app, IHttpProxy httpProxy)
+        public void Configure(IApplicationBuilder app, IHttpForwarder forwarder)
         {
-            app.UseHosting(httpUrl, httpProxy);
+            app.UseHosting(httpUrl, forwarder);
         }
     }
 }

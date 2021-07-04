@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,26 +10,47 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Yarp.ReverseProxy.Service.Proxy;
+using Yarp.ReverseProxy.Forwarder;
 
 namespace Conesoft.Host.Web
 {
     public class Hosting
     {
-        public record Site(File Deployment, Process Process, string Domain, string Subdomain, int? Port)
+        public record Service(File Deployment, Process Process)
         {
-            public string FullDomain => (Subdomain.ToLowerInvariant() == "main" ? Domain : $"{Subdomain}.{Domain}").ToLowerInvariant();
-            public string RelevantDomainPart => Subdomain.ToLowerInvariant() == "main" ? Domain : Subdomain;
-        };
+            public string Name => Deployment.NameWithoutExtension;
+            public virtual Directory Hosting => Deployment.Parent.Parent.Parent / Live / Deployment.Parent.Name / Deployment.NameWithoutExtension;
+
+
+
+            public static string[] Types => new[] { "Services", "Websites" };
+            public static Service FromFile(File file) => file.Parent.Name switch
+            {
+                "Websites" => new Site(file, null, null),
+                "Services" => new Service(file, null),
+                _ => null
+            };
+        }
+
+        public record Site(File Deployment, Process Process, int? Port) : Service(Deployment, Process)
+        {
+            public string Domain => string.Join('.', Name.Split('.').TakeLast(2));
+            public string Subdomain => Name.Split('.').SkipLast(2).FirstOrDefault() ?? MainDomainPart;
+            public string FullDomain => Name;
+            public string RelevantDomainPart => Subdomain.ToLowerInvariant() == MainDomainPart ? Domain : Subdomain;
+            public override Directory Hosting => base.Hosting.Parent / Domain / Subdomain;
+
+            static string MainDomainPart => "main";
+        }
 
         readonly Directory root;
-        readonly Dictionary<File, Site> sites = new();
+        readonly Dictionary<File, Service> services = new();
 
-        public event Action<IReadOnlyDictionary<File, Site>> OnSitesChanged;
-        public void TrackSiteChanges() => OnSitesChanged?.Invoke(sites);
+        public event Action<Service[]> OnServicesChanged;
+        public void TrackServicesChanges() => OnServicesChanged?.Invoke(services.Values.ToArray());
 
-        Directory Deployments => root / "Deployments" / "Websites";
-        Directory Hostings => root / "Websites";
+        static string Deployments => "Deployments";
+        static string Live => "Live";
 
         public Hosting(IConfiguration configuration)
         {
@@ -37,21 +59,27 @@ namespace Conesoft.Host.Web
 
         public async Task Begin(string responseUrl)
         {
-            await foreach (var files in Deployments.Live().Changes())
+            await foreach (var files in (root / Deployments).Live(allDirectories: true).Changes())
             {
-                foreach (var file in files.Added.Concat(files.Deleted).Concat(files.Changed).ToArray())
+                if (files.ThereAreChanges)
                 {
-                    StopDeploy(file);
+                    Log.Information($"changes in {string.Join(" & ", files.Added.Concat(files.Changed).Concat(files.Deleted).Select(f => f.Parent.Name).Where(n => Service.Types.Contains(n)).Distinct())}");
+
+                    foreach (var file in files.Added.Concat(files.Deleted).Concat(files.Changed).ToArray())
+                    {
+                        await StopDeploySite(file);
+                        TrackServicesChanges();
+                    }
+                    foreach (var file in files.Added.Concat(files.Changed).ToArray())
+                    {
+                        await StartDeploySite(file, responseUrl);
+                        TrackServicesChanges();
+                    }
                 }
-                foreach (var file in files.Added.Concat(files.Changed).ToArray())
-                {
-                    StartDeploy(file, responseUrl);
-                }
-                OnSitesChanged?.Invoke(sites);
             }
         }
 
-        public void UseHostingOnApplicationBuilder(IApplicationBuilder app, string responseUrl, IHttpProxy proxy)
+        public void UseHostingOnApplicationBuilder(IApplicationBuilder app, string responseUrl, IHttpForwarder forwarder)
         {
             var httpClient = new HttpMessageInvoker(new SocketsHttpHandler()
             {
@@ -62,7 +90,7 @@ namespace Conesoft.Host.Web
             });
 
             var transformer = new CustomTransformer(); // or HttpTransformer.Default;
-            var requestOptions = new RequestProxyOptions { Timeout = TimeSpan.FromSeconds(100) };
+            var requestOptions = new ForwarderRequestConfig { Timeout = TimeSpan.FromSeconds(100) };
 
             app.UseEndpoints(endpoints =>
             {
@@ -70,9 +98,10 @@ namespace Conesoft.Host.Web
                 {
                     try
                     {
-                        if(httpContext.Request.Query["site"].ToString() is string site && int.Parse(httpContext.Request.Query["port"]) is int port)
+                        if (httpContext.Request.Query["site"].ToString() is string site && int.Parse(httpContext.Request.Query["port"]) is int port)
                         {
-                            var _ = (root / Filename.From("log", "txt")).AppendLine($"{site} -> {port}");
+                            Log.Information($"{site} -> {port}");
+
                             UpdatePort(site, port);
 
                             httpContext.Response.StatusCode = StatusCodes.Status202Accepted;
@@ -88,9 +117,9 @@ namespace Conesoft.Host.Web
 
                 endpoints.Map("/{**catch-all}", async httpContext =>
                 {
-                    if (SiteByDomain(httpContext.Request.Host.Host) is (File file, Site site) && site.Port != null)
+                    if (SiteByDomain(httpContext.Request.Host.Host) is Site site && site.Port != null)
                     {
-                        await proxy.ProxyAsync(httpContext, $"https://localhost:{site.Port}", httpClient, requestOptions, transformer);
+                        await forwarder.SendAsync(httpContext, $"https://localhost:{site.Port}", httpClient, requestOptions, transformer);
                     }
                     else
                     {
@@ -103,41 +132,58 @@ namespace Conesoft.Host.Web
             var _ = Begin(responseUrl);
         }
 
-        (File file, Site site) SiteByDomain(string domain) => sites.Where(p => p.Value.FullDomain == domain.ToLowerInvariant()).Select(p => (file: p.Key, site: p.Value)).FirstOrDefault();
+        Site SiteByDomain(string domain) => services.Values.OfType<Site>().Where(p => p.FullDomain == domain.ToLowerInvariant()).FirstOrDefault();
 
         void UpdatePort(string domain, int port)
         {
-            if (SiteByDomain(domain) is (File file, Site site))
+            if (SiteByDomain(domain) is Site site)
             {
-                sites[file] = site with { Port = port };
+                services[site.Deployment] = site with { Port = port };
             }
         }
 
-        void StartDeploy(File file, string responseUrl)
+        async Task StartDeploySite(File file, string responseUrl)
         {
-            var segments = GetDomainSegments(file);
-            Site site = new(file, null, segments.domain, segments.subdomain, null);
-            var hosting = Hostings / site.Domain / site.Subdomain;
-            hosting.Parent.Create();
-            site.Deployment.AsZip().ExtractTo(hosting);
-            site = site with { Process = RunHosted(hosting.Filtered("*.exe", allDirectories: false).FirstOrDefault(), responseUrl) };
-            sites[file] = site;
-        }
-
-        void StopDeploy(File file)
-        {
-            if (sites.GetValueOrDefault(file) is Site site)
+            await Task.Run(() =>
             {
-                var hosting = Hostings / site.Domain / site.Subdomain;
-                site.Process.Kill();
-                site.Process.WaitForExit();
-                sites.Remove(file);
-                System.IO.Directory.Delete(hosting.Path, true);
-                if(!hosting.Parent.AllFiles.Any())
+                if (Service.FromFile(file) is Service service)
                 {
-                    hosting.Parent.Delete();
+                    Log.Information($"\tstart {file}");
+
+                    file.WaitTillReady();
+
+                    service.Hosting.Parent.Create();
+                    service.Deployment.AsZip().ExtractTo(service.Hosting);
+                    service = service with { Process = RunHosted(service.Hosting.Filtered("*.exe", allDirectories: false).FirstOrDefault(), responseUrl) };
+                    services[file] = service;
                 }
-            }
+            });
+        }
+
+
+
+        async Task StopDeploySite(File file)
+        {
+            await Task.Run(() =>
+            {
+                if ((services.GetValueOrDefault(file) ?? Service.FromFile(file)) is Service service)
+                {
+                    if (service.Process is Process process)
+                    {
+                        Log.Information($"\tstop {file}");
+
+                        process.Kill();
+                        process.WaitForExit();
+                    }
+                    services.Remove(file);
+                    service.Hosting.Delete();
+
+                    if (!service.Hosting.Parent.AllFiles.Any() && service.Hosting.Parent.Parent != root / Live)
+                    {
+                        service.Hosting.Parent.Delete();
+                    }
+                }
+            });
         }
 
         static Process RunHosted(File file, string responseUrl)
@@ -149,15 +195,6 @@ namespace Conesoft.Host.Web
             };
 
             return FromStackOverflow.ChildProcessTracker.Track(Process.Start(start));
-        }
-
-        static (string domain, string subdomain) GetDomainSegments(File file)
-        {
-            var domainSegments = file.NameWithoutExtension.Split('.').ToArray();
-            var domain = $"{domainSegments.SkipLast(1).Last()}.{domainSegments.Last()}";
-            var subdomain = domainSegments.Length == 3 ? domainSegments.First() : "main";
-
-            return (domain, subdomain);
         }
     }
 }

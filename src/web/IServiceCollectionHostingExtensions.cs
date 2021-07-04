@@ -6,7 +6,7 @@ namespace Conesoft.Host.Web
     {
         public static IServiceCollection AddHosting(this IServiceCollection services)
         {
-            services.AddHttpProxy();
+            services.AddHttpForwarder();
             services.AddSingleton<Hosting>();
 
             return services;

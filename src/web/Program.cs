@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,11 +32,23 @@ namespace Conesoft.Host.Web
                 urls.https = urls.all.FirstOrDefault(u => u.StartsWith("https:"));
 
                 var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-                var root = configuration["hosting:root"];
+                var root = Directory.From(configuration["hosting:root"]);
+
+                configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").AddJsonFile((root / "Settings" / Filename.From("hosting", "json")).Path).Build();
                 var password = configuration["hosting:certificate-password"];
 
-                var certificatesPath = Directory.From(root) / "Storage" / "Websites" / "Certificates";
-                certificates = certificatesPath.AllFiles.ToDictionary(c => c.NameWithoutExtension, c => new X509Certificate2(c.Path, password));
+                var certificatesPath = root / "Storage" / "Websites" / "Certificates";
+                _ = Task.Run(async () =>
+                {
+                    await foreach (var files in certificatesPath.Live().Changes())
+                    {
+                        if(files.Added.Any() || files.Deleted.Any() || files.Changed.Any())
+                        {
+                            Log.Information("loading certificates");
+                            certificates = files.All.ToDictionary(c => c.NameWithoutExtension, c => new X509Certificate2(c.Path, password));
+                        }
+                    }
+                });
 
                 webBuilder.UseKestrel(options =>
                 {

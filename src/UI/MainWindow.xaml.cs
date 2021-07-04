@@ -44,27 +44,42 @@ namespace Conesoft.Host.UI
             ShowInTaskbar = WindowState != WindowState.Minimized;
         }
 
+        bool once = true;
+
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
 
-            var context = Tag as App.HostingTag;
-            var hosting = context.Hosting;
-            hosting.OnSitesChanged += Hosting_OnSitesChanged;
-            hosting.TrackSiteChanges();
+            if (once)
+            {
+                var context = Tag as App.HostingTag;
+                var hosting = context.Hosting;
+                hosting.OnServicesChanged += Hosting_OnServicesChanged;
+                hosting.TrackServicesChanges();
+
+                once = false;
+            }
         }
 
-        private void Hosting_OnSitesChanged(IReadOnlyDictionary<File, Web.Hosting.Site> sites)
+        private void Hosting_OnServicesChanged(Web.Hosting.Service[] services)
         {
-            var sorted = sites.Values.GroupBy(s => s.Domain).OrderByDescending(s => s.Key);
+            var sites = services.OfType<Web.Hosting.Site>();
+            var otherservices = services.Except(sites);
+            var sorted = sites.GroupBy(s => s.Domain).OrderByDescending(s => s.Key);
+
             DataContext = new
             {
                 Domains = sorted.Select(s => new
                 {
                     Domain = s.Key,
                     Subdomains = s.ToArray()
+                }),
+                Services = otherservices.Select(s => new
+                {
+                    Name = s.Name.ToLowerInvariant()
                 })
             };
+
             trayIcon.UpdateContextMenu(sorted);
         }
 

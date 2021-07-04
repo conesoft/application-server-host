@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Yarp.ReverseProxy.Service.Proxy;
+using Yarp.ReverseProxy.Forwarder;
 
 namespace Conesoft.Host.Web
 {
