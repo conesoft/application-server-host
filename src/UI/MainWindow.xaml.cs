@@ -42,6 +42,7 @@ namespace Conesoft.Host.UI
         {
             base.OnStateChanged(e);
             ShowInTaskbar = WindowState != WindowState.Minimized;
+            WindowStyle = WindowState != WindowState.Minimized ? WindowStyle.None : WindowStyle.ToolWindow; // hides from alt-tab
         }
 
         bool once = true;

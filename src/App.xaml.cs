@@ -25,7 +25,7 @@ namespace Conesoft.Host
             System.IO.File.WriteAllText(log.Path, "");
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.File(log.Path, buffered: false)
+                .WriteTo.File(log.Path, buffered: false, flushToDiskInterval: TimeSpan.FromMilliseconds(1))
                 .CreateLogger();
 
             Log.Information("App has started");

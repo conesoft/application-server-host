@@ -42,7 +42,7 @@ namespace Conesoft.Host.Web
                 {
                     await foreach (var files in certificatesPath.Live().Changes())
                     {
-                        if(files.Added.Any() || files.Deleted.Any() || files.Changed.Any())
+                        if(files.ThereAreChanges)
                         {
                             Log.Information("loading certificates");
                             certificates = files.All.ToDictionary(c => c.NameWithoutExtension, c => new X509Certificate2(c.Path, password));

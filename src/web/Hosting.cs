@@ -63,7 +63,7 @@ namespace Conesoft.Host.Web
             {
                 if (files.ThereAreChanges)
                 {
-                    Log.Information($"changes in {string.Join(" & ", files.Added.Concat(files.Changed).Concat(files.Deleted).Select(f => f.Parent.Name).Where(n => Service.Types.Contains(n)).Distinct())}");
+                    Log.Information($"changes found in {string.Join(" & ", files.Added.Concat(files.Changed).Concat(files.Deleted).Select(f => f.Parent.Name).Where(n => Service.Types.Contains(n)).Distinct())}");
 
                     foreach (var file in files.Added.Concat(files.Deleted).Concat(files.Changed).ToArray())
                     {
@@ -100,7 +100,7 @@ namespace Conesoft.Host.Web
                     {
                         if (httpContext.Request.Query["site"].ToString() is string site && int.Parse(httpContext.Request.Query["port"]) is int port)
                         {
-                            Log.Information($"{site} -> {port}");
+                            Log.Information($"[WEBSITES] \"{site}\" is running on Port {port}");
 
                             UpdatePort(site, port);
 
@@ -148,7 +148,7 @@ namespace Conesoft.Host.Web
             {
                 if (Service.FromFile(file) is Service service)
                 {
-                    Log.Information($"\tstart {file}");
+                    Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] starting \"{file.NameWithoutExtension}\"");
 
                     file.WaitTillReady();
 
@@ -170,7 +170,7 @@ namespace Conesoft.Host.Web
                 {
                     if (service.Process is Process process)
                     {
-                        Log.Information($"\tstop {file}");
+                        Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] stopping \"{file.NameWithoutExtension}\"");
 
                         process.Kill();
                         process.WaitForExit();
