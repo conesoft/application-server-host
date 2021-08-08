@@ -59,6 +59,7 @@ namespace Conesoft.Host.Web
 
         public async Task Begin(string responseUrl)
         {
+            Log.Information("watching folder {folder}", root / Deployments);
             await foreach (var files in (root / Deployments).Live(allDirectories: true).Changes())
             {
                 if (files.ThereAreChanges)
@@ -67,11 +68,14 @@ namespace Conesoft.Host.Web
 
                     foreach (var file in files.Added.Concat(files.Deleted).Concat(files.Changed).ToArray())
                     {
+                        Log.Information("stopping {file}", file);
                         await StopDeploySite(file);
+                        Log.Information("stopped {file}", file);
                         TrackServicesChanges();
                     }
                     foreach (var file in files.Added.Concat(files.Changed).ToArray())
                     {
+                        Log.Information("starting {file}", file);
                         await StartDeploySite(file, responseUrl);
                         TrackServicesChanges();
                     }
@@ -164,26 +168,42 @@ namespace Conesoft.Host.Web
 
         async Task StopDeploySite(File file)
         {
-            await Task.Run(() =>
+            try
             {
-                if ((services.GetValueOrDefault(file) ?? Service.FromFile(file)) is Service service)
+                Log.Information("stopping ()");
+                await Task.Run(() =>
                 {
-                    if (service.Process is Process process)
+                    Log.Information("getting service from file");
+                    if ((services.GetValueOrDefault(file) ?? Service.FromFile(file)) is Service service)
                     {
-                        Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] stopping \"{file.NameWithoutExtension}\"");
+                        Log.Information("service is {service}", service);
+                        if (service.Process is Process process)
+                        {
+                            Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] stopping \"{file.NameWithoutExtension}\"");
 
-                        process.Kill();
-                        process.WaitForExit();
-                    }
-                    services.Remove(file);
-                    service.Hosting.Delete();
+                            process.Kill();
+                            process.WaitForExit();
+                        }
+                        Log.Information("removing service");
+                        services.Remove(file);
+                        Log.Information("deleting service");
+                        service.Hosting.Delete();
 
-                    if (!service.Hosting.Parent.AllFiles.Any() && service.Hosting.Parent.Parent != root / Live)
-                    {
-                        service.Hosting.Parent.Delete();
+                        Log.Information("cleaning up folders");
+                        if (!service.Hosting.Parent.AllFiles.Any() && service.Hosting.Parent.Parent != root / Live)
+                        {
+                            service.Hosting.Parent.Delete();
+                        }
+                        Log.Information("done");
                     }
-                }
-            });
+                });
+                Log.Information("stopping () done");
+            }
+            catch (Exception e)
+            {
+                Log.Error(e.Message);
+                Log.Error(e.ToString());
+            }
         }
 
         static Process RunHosted(File file, string responseUrl)

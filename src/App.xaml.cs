@@ -18,6 +18,8 @@ namespace Conesoft.Host
         {
             base.OnStartup(e);
 
+            this.Dispatcher.UnhandledException += Dispatcher_UnhandledException;
+
             var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
             var root = Directory.From(configuration["hosting:root"]);
 
@@ -37,7 +39,22 @@ namespace Conesoft.Host
                 p.Kill();
             }
 
-            host = await Web.Program.StartWebService(Environment.GetCommandLineArgs());
+            Log.Information("Starting web service");
+            try
+            {
+                host = await Web.Program.StartWebService(Environment.GetCommandLineArgs());
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.Message);
+                Log.Error(ex.ToString());
+            }
+        }
+
+        private void Dispatcher_UnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            Log.Error(e.Exception.Message);
+            Log.Error(e.Exception.ToString());
         }
 
         protected override void OnExit(ExitEventArgs e)

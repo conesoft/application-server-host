@@ -27,9 +27,15 @@ namespace Conesoft.Host.Web
         Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
             .ConfigureWebHost(webBuilder =>
             {
-                var urls = (all: webBuilder.GetSetting(WebHostDefaults.ServerUrlsKey).Split(';'), http: "", https: "");
+                Log.Information("configuring web host");
+
+                var webHostDefaults = webBuilder.GetSetting(WebHostDefaults.ServerUrlsKey) ?? "https://localhost:443/;http://localhost:80/";
+
+                var urls = (all: webHostDefaults.Split(';'), http: "", https: "");
                 urls.http = urls.all.FirstOrDefault(u => u.StartsWith("http:"));
                 urls.https = urls.all.FirstOrDefault(u => u.StartsWith("https:"));
+
+                Log.Information("urls: http = {http}, https = {https}", urls.http, urls.https);
 
                 var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
                 var root = Directory.From(configuration["hosting:root"]);
@@ -46,14 +52,17 @@ namespace Conesoft.Host.Web
                         {
                             Log.Information("loading certificates");
                             certificates = files.All.ToDictionary(c => c.NameWithoutExtension, c => new X509Certificate2(c.Path, password));
+                            Log.Information("loaded {count} certificates", certificates.Count);
                         }
                     }
                 });
 
+                Log.Information("using kestrel for public https");
                 webBuilder.UseKestrel(options =>
                 {
                     options.Listen(IPAddress.Any, new Uri(urls.https).Port, listenOptions =>
                     {
+                        Log.Information("set up port {port}", new Uri(urls.https).Port);
                         listenOptions.UseHttps(httpsOptions =>
                         {
                             httpsOptions.ServerCertificateSelector = (context, dnsName) =>

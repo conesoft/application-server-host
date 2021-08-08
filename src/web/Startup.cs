@@ -13,7 +13,8 @@ namespace Conesoft.Host.Web
 
         public Startup(IConfiguration configuration)
         {
-            httpUrl = configuration[WebHostDefaults.ServerUrlsKey].Split(';').FirstOrDefault(u => u.StartsWith("http://"));
+            var webHostDefaults = configuration[WebHostDefaults.ServerUrlsKey] ?? "https://localhost:443/;http://localhost:80/";
+            httpUrl = webHostDefaults.Split(';').FirstOrDefault(u => u.StartsWith("http://"));
         }
 
         public void ConfigureServices(IServiceCollection services)
