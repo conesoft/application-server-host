@@ -18,6 +18,7 @@ namespace Conesoft.Host
         {
             base.OnStartup(e);
 
+
             this.Dispatcher.UnhandledException += Dispatcher_UnhandledException;
 
             var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
@@ -31,6 +32,13 @@ namespace Conesoft.Host
                 .CreateLogger();
 
             Log.Information("App has started");
+
+            if (Environment.CurrentDirectory == Environment.SystemDirectory)
+            {
+                var executableDirectory = File.From(Process.GetCurrentProcess().MainModule.FileName).Parent.Path;
+                Environment.CurrentDirectory = executableDirectory;
+                Log.Information("Remapping 'Current Directory' from '{old}' to '{new}'", Environment.CurrentDirectory, executableDirectory);
+            }
 
             //// DIE, ALREADY OPEN APPS, DIE!!!
             var currentProcess = Process.GetCurrentProcess();
@@ -55,6 +63,8 @@ namespace Conesoft.Host
         {
             Log.Error(e.Exception.Message);
             Log.Error(e.Exception.ToString());
+
+            throw e.Exception;
         }
 
         protected override void OnExit(ExitEventArgs e)

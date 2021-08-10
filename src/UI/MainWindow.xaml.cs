@@ -1,6 +1,7 @@
 ﻿using Conesoft.Files;
 using ControlzEx.Theming;
 using MahApps.Metro.Controls;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 using System;
 using System.Diagnostics;
@@ -65,10 +66,13 @@ namespace Conesoft.Host.UI
 
         void SetServerIconsByTheme(Theme theme)
         {
+            var module = Process.GetCurrentProcess().MainModule;
+            var iconPath = File.From(module.FileName).Parent / "Icons";
+
             Icon = theme.BaseColorScheme switch
             {
-                "Light" => new BitmapImage(new Uri("Icons/Server.Dark.png", UriKind.Relative)),
-                "Dark" => new BitmapImage(new Uri("Icons/Server.Light.png", UriKind.Relative)),
+                "Light" => new BitmapImage(new Uri((iconPath / Filename.From("Server.Dark", "png")).Path)),
+                "Dark" => new BitmapImage(new Uri((iconPath / Filename.From("Server.Light", "png")).Path)),
                 _ => new BitmapImage()
             };
             trayIcon.UpdateTheme(theme.BaseColorScheme);
@@ -154,6 +158,8 @@ namespace Conesoft.Host.UI
             {
                 settings = new Settings(SettingsHostingPath.Text, SettingsAutoStart.IsOn, SettingsStartMinimized.IsOn);
 
+                ApplySettings(settings);
+
                 Log.Information("saving settings ...");
 
                 try
@@ -166,18 +172,38 @@ namespace Conesoft.Host.UI
                 }
             }
         }
+
+        private void ApplySettings(Settings settings)
+        {
+            var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
+            var appName = Assembly.GetEntryAssembly().GetName().Name;
+            var appLocation = Process.GetCurrentProcess().MainModule.FileName;
+            if (settings.AutoStart)
+            {
+                if(key.GetValue(appName) == null)
+                {
+                    key.SetValue(appName, appLocation);
+                }
+            }
+            else
+            {
+                key.DeleteValue(appName);
+            }
+
+        }
+
         private async Task SyncLogToScreen()
         {
             await foreach (var files in Directory.From(@"D:\Hosting").Live().Changes())
             {
-                if(files.ThereAreChanges)
+                if (files.ThereAreChanges)
                 {
                     try
                     {
                         var scroller = LogOutput.Parent as ScrollViewer;
                         var text = (await Task.WhenAll(files.All.Where(f => f.Name == "log.txt").Select(f => ReadText(f)))).FirstOrDefault() ?? "<no log found>";
                         LogOutput.Text = text;
-                        if(isAtEnd)
+                        if (isAtEnd)
                         {
                             scroller.ScrollToEnd();
                         }
