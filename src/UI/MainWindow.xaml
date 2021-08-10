@@ -4,10 +4,11 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+                 xmlns:fa="clr-namespace:Meziantou.WpfFontAwesome;assembly=Meziantou.WpfFontAwesome"
                  mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
         ShowTitleBar="False"
-        Title="Host" Height="920" Width="1240" Background="{DynamicResource MahApps.Brushes.SystemControlBackgroundAltHigh}" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}">
+        Title="Host" Height="960" Width="1240" Background="{DynamicResource MahApps.Brushes.SystemControlBackgroundAltHigh}" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}">
     <Grid>
         <Image VerticalAlignment="Bottom"
                HorizontalAlignment="Right"
@@ -45,7 +46,7 @@
                 <RowDefinition Height="auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            
+
             <TextBlock Grid.Row="0" Margin="16" FontSize="48">Conesoft Host</TextBlock>
 
             <Grid Grid.Row="1" Margin="16">
@@ -67,14 +68,15 @@
                             <ItemsControl ItemsSource="{Binding Subdomains}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <mah:Tile Title="{Binding RelevantDomainPart, StringFormat='go to {0}'}"
-                                        Margin="3"
-                                        mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                                        Background="{DynamicResource MahApps.Brushes.Accent}"
-                                              Opacity="1"
-                                        HorizontalTitleAlignment="Right"
-                                        Tag="{Binding FullDomain}"
-                                        Click="Tile_Click">
+                                        <mah:Tile Title="{Binding RelevantDomainPart}"
+                                            Margin="3"
+                                            mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
+                                            Background="{DynamicResource MahApps.Brushes.Accent}"
+                                                  Opacity="1"
+                                            HorizontalTitleAlignment="Right"
+                                            Tag="{Binding FullDomain}"
+                                            Click="Tile_Click">
+                                            <fa:FontAwesomeIcon SolidIcon="Stream" FontSize="40" />
                                         </mah:Tile>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -95,12 +97,16 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <mah:Tile Title="{Binding Name}"
-                            Margin="3"
-                            mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                            Background="{DynamicResource MahApps.Brushes.Accent2}"
+                                    Margin="3"
+                                    Width="280"
+                                    mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
+                                    Background="{DynamicResource MahApps.Brushes.Accent2}"
                                     Opacity="1"
-                            HorizontalTitleAlignment="Right"
-                            Tag="{Binding Name}">
+                                    HorizontalTitleAlignment="Right"
+                                    Tag="{Binding Name}">
+                                    <Border Width="200">
+                                        <fa:FontAwesomeIcon HorizontalAlignment="Left" SolidIcon="Terminal" FontSize="40" />
+                                    </Border>
                                 </mah:Tile>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -109,16 +115,78 @@
 
                 <TextBlock Grid.Row="0" Grid.Column="2" FontSize="32">System</TextBlock>
 
-                <WrapPanel Grid.Row="1" Grid.Column="2" Margin="0 16">
-                    <mah:Tile Title="shut down host"
-                    Margin="3"
-                    mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                    Background="{DynamicResource MahApps.Brushes.Accent3}"
-                    HorizontalTitleAlignment="Right"
-                    Click="Tile_ShutDownHost_Click">
-                    </mah:Tile>
-                </WrapPanel>
+                <StackPanel Grid.Row="1" Grid.Column="2">
+
+                    <WrapPanel Margin="0 16">
+                        <mah:Tile
+                            Title="logfiles"
+                            Margin="3"
+                            mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
+                            Background="{DynamicResource MahApps.Brushes.Accent3}"
+                            Click="Tile_OpenLogFiles_Click">
+                            <fa:FontAwesomeIcon SolidIcon="FileAlt" FontSize="40" />
+                        </mah:Tile>
+                    </WrapPanel>
+
+                    <WrapPanel Margin="0 16">
+                        <mah:Tile
+                            Margin="3"
+                            mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
+                            Background="{DynamicResource MahApps.Brushes.Accent3}"
+                            HorizontalTitleAlignment="Right"
+                            Click="Tile_OpenSettings_Click">
+                            <fa:FontAwesomeIcon SolidIcon="Cog" FontSize="40" />
+                        </mah:Tile>
+                    </WrapPanel>
+
+                    <WrapPanel Margin="0 16">
+                        <mah:Tile
+                            Margin="3"
+                            mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
+                            Background="{DynamicResource MahApps.Brushes.Accent3}"
+                            HorizontalTitleAlignment="Right"
+                            Click="Tile_ShutDownHost_Click">
+                            <fa:FontAwesomeIcon SolidIcon="PowerOff" FontSize="40" />
+                        </mah:Tile>
+                    </WrapPanel>
+                </StackPanel>
             </Grid>
         </Grid>
+
+        <mah:FlyoutsControl x:Name="Flyouts">
+            <mah:Flyout x:Name="SettingsFlyout" IsOpen="False" Position="Right" Width="620">
+                <StackPanel Margin="64 0">
+                    <TextBlock Margin="16" FontSize="48">Settings</TextBlock>
+                    <TextBlock>hosting path</TextBlock>
+                    <TextBox x:Name="SettingsHostingPath" TextChanged="HostingPath_TextChanged"></TextBox>
+                    <TextBlock>autostart</TextBlock>
+                    <mah:ToggleSwitch x:Name="SettingsAutoStart" Toggled="AutoStart_Toggled"></mah:ToggleSwitch>
+                    <TextBlock>start minimized</TextBlock>
+                    <mah:ToggleSwitch x:Name="SettingsStartMinimized" Toggled="StartMinimized_Toggled"></mah:ToggleSwitch>
+                </StackPanel>
+            </mah:Flyout>
+
+            <mah:Flyout x:Name="LogFilesFlyout" IsOpen="False" Position="Right" Width="930">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Margin="80 16" FontSize="48">Log Files</TextBlock>
+                    <Button Grid.Column="1" Click="Button_OpenLogFile_Click" Margin="16" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{DynamicResource MahApps.Styles.Button.Flat}">
+                        <fa:FontAwesomeIcon SolidIcon="FolderOpen" Margin="8" FontSize="24"></fa:FontAwesomeIcon>
+                    </Button>
+                    <ScrollViewer Grid.Row="1" Grid.ColumnSpan="2" ScrollChanged="ScrollViewer_ScrollChanged">
+                        <TextBlock x:Name="LogOutput" FontFamily="Consolas" ScrollViewer.VerticalScrollBarVisibility="Visible" FontSize="8" Background="{DynamicResource MahApps.Brushes.SystemControlBackgroundAltHigh}" Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}">
+                        loading ...
+                        </TextBlock>
+                    </ScrollViewer>
+                </Grid>
+            </mah:Flyout>
+        </mah:FlyoutsControl>
     </Grid>
 </mah:MetroWindow>
