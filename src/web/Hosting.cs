@@ -18,7 +18,7 @@ namespace Conesoft.Host.Web
     {
         public record Service(File Deployment, Process Process)
         {
-            public string Name => Deployment.NameWithoutExtension;
+            public string Name => Deployment.NameWithoutExtension.ToLowerInvariant();
             public virtual Directory Hosting => Deployment.Parent.Parent.Parent / Live / Deployment.Parent.Name / Deployment.NameWithoutExtension;
 
 
@@ -30,6 +30,9 @@ namespace Conesoft.Host.Web
                 "Services" => new Service(file, null),
                 _ => null
             };
+
+            public string ProcessDescription => Process != null ? $"{Process.ProcessName}.exe" : "";
+            public string ProcessIdDescription => Process != null ? $"pid = {Process.Id}" : "";
         }
 
         public record Site(File Deployment, Process Process, int? Port) : Service(Deployment, Process)
@@ -41,6 +44,8 @@ namespace Conesoft.Host.Web
             public override Directory Hosting => base.Hosting.Parent / Domain / Subdomain;
 
             static string MainDomainPart => "main";
+
+            public string PortDescription => Port.HasValue ? $":{Port.Value}" : "";
         }
 
         readonly Directory root;
@@ -98,27 +103,6 @@ namespace Conesoft.Host.Web
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.Map("/register-host", async httpContext =>
-                {
-                    try
-                    {
-                        if (httpContext.Request.Query["site"].ToString() is string site && int.Parse(httpContext.Request.Query["port"]) is int port)
-                        {
-                            Log.Information($"[WEBSITES] \"{site}\" is running on Port {port}");
-
-                            UpdatePort(site, port);
-
-                            httpContext.Response.StatusCode = StatusCodes.Status202Accepted;
-                            await httpContext.Response.WriteAsync($"registering host {site} at {port}");
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-                        await httpContext.Response.WriteAsync($"Error Message: {e.Message}");
-                    }
-                });
-
                 endpoints.Map("/{**catch-all}", async httpContext =>
                 {
                     if (SiteByDomain(httpContext.Request.Host.Host) is Site site && site.Port != null)
@@ -138,14 +122,6 @@ namespace Conesoft.Host.Web
 
         Site SiteByDomain(string domain) => services.Values.OfType<Site>().Where(p => p.FullDomain == domain.ToLowerInvariant()).FirstOrDefault();
 
-        void UpdatePort(string domain, int port)
-        {
-            if (SiteByDomain(domain) is Site site)
-            {
-                services[site.Deployment] = site with { Port = port };
-            }
-        }
-
         async Task StartDeploySite(File file, string responseUrl)
         {
             await Task.Run(() =>
@@ -160,8 +136,26 @@ namespace Conesoft.Host.Web
                     service.Deployment.AsZip().ExtractTo(service.Hosting);
                     service = service with { Process = RunHosted(service.Hosting.Filtered("*.exe", allDirectories: false).FirstOrDefault(), responseUrl) };
                     services[file] = service;
+
+                    _ = ScanForPort(file);
                 }
             });
+        }
+
+        async Task ScanForPort(File file)
+        {
+            if (services[file] is Site site)
+            {
+                Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] scanning for Port on PID \"{site.Process.Id}\"");
+                Network_Connections.Connection connection = null;
+                for(; connection == null; connection = Network_Connections.Connection.Listening.From(site.Process))
+                {
+                    await Task.Delay(500);
+                }
+                Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] found Port \"{connection.Local.Port}\"");
+                services[file] = site with { Port = connection.Local.Port };
+                TrackServicesChanges();
+            }
         }
 
 
@@ -208,7 +202,7 @@ namespace Conesoft.Host.Web
 
         static Process RunHosted(File file, string responseUrl)
         {
-            var start = new ProcessStartInfo(file.Path, $"--urls=https://*:0/ --conesoft-host-register={responseUrl + "register-host"}")
+            var start = new ProcessStartInfo(file.Path, $"--urls=https://*:0/")
             {
                 WorkingDirectory = file.Parent.Path,
                 CreateNoWindow = true,

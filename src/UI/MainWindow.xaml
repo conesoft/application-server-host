@@ -72,11 +72,16 @@
                                             Margin="3"
                                             mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
                                             Background="{DynamicResource MahApps.Brushes.Accent}"
-                                                  Opacity="1"
-                                            HorizontalTitleAlignment="Right"
                                             Tag="{Binding FullDomain}"
                                             Click="Tile_Click">
-                                            <fa:FontAwesomeIcon SolidIcon="Stream" FontSize="40" />
+                                            <Grid>
+                                                <fa:FontAwesomeIcon SolidIcon="Stream" FontSize="40" />
+                                                <StackPanel Margin="5">
+                                                    <TextBlock Opacity="0.5" Text="{Binding ProcessDescription}" FontSize="10" FontWeight="Light" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                                                    <TextBlock Opacity="0.5" Text="{Binding ProcessIdDescription}" FontSize="10" FontWeight="Light" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                                                    <TextBlock Opacity="0.5" Text="{Binding PortDescription}" FontSize="10" FontWeight="Light" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                                                </StackPanel>
+                                            </Grid>
                                         </mah:Tile>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -101,12 +106,15 @@
                                     Width="280"
                                     mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
                                     Background="{DynamicResource MahApps.Brushes.Accent2}"
-                                    Opacity="1"
                                     HorizontalTitleAlignment="Right"
                                     Tag="{Binding Name}">
-                                    <Border Width="200">
-                                        <fa:FontAwesomeIcon HorizontalAlignment="Left" SolidIcon="Terminal" FontSize="40" />
-                                    </Border>
+                                    <Grid>
+                                        <fa:FontAwesomeIcon HorizontalAlignment="Left" Margin="50" SolidIcon="Terminal" FontSize="40" />
+                                        <StackPanel Margin="5">
+                                            <TextBlock Opacity="0.5" Text="{Binding ProcessDescription}" FontSize="10" FontWeight="Light" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                                            <TextBlock Opacity="0.5" Text="{Binding ProcessIdDescription}" FontSize="10" FontWeight="Light" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                                        </StackPanel>
+                                    </Grid>
                                 </mah:Tile>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

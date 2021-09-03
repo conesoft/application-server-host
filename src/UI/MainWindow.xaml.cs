@@ -1,7 +1,6 @@
 ﻿using Conesoft.Files;
 using ControlzEx.Theming;
 using MahApps.Metro.Controls;
-using Microsoft.Extensions.Configuration;
 using Serilog;
 using System;
 using System.Diagnostics;
@@ -108,18 +107,18 @@ namespace Conesoft.Host.UI
             var otherservices = services.Except(sites);
             var sorted = sites.GroupBy(s => s.Domain).OrderByDescending(s => s.Key);
 
-            DataContext = new
+            Dispatcher.Invoke(() =>
             {
-                Domains = sorted.Select(s => new
+                DataContext = new
                 {
-                    Domain = s.Key,
-                    Subdomains = s.ToArray()
-                }),
-                Services = otherservices.Select(s => new
-                {
-                    Name = s.Name.ToLowerInvariant()
-                })
-            };
+                    Domains = sorted.Select(s => new
+                    {
+                        Domain = s.Key + "LA",
+                        Subdomains = s.ToArray()
+                    }).ToArray(),
+                    Services = otherservices.ToArray()
+                };
+            });
 
             trayIcon.UpdateContextMenu(sorted);
         }
@@ -180,7 +179,7 @@ namespace Conesoft.Host.UI
             var appLocation = Process.GetCurrentProcess().MainModule.FileName;
             if (settings.AutoStart)
             {
-                if(key.GetValue(appName) == null)
+                if (key.GetValue(appName) == null)
                 {
                     key.SetValue(appName, appLocation);
                 }
