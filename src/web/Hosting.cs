@@ -90,16 +90,16 @@ namespace Conesoft.Host.Web
 
         public void UseHostingOnApplicationBuilder(IApplicationBuilder app, string responseUrl, IHttpForwarder forwarder)
         {
+            var transformer = new CustomTransformer(); // or HttpTransformer.Default;
+            var requestOptions = new ForwarderRequestConfig { AllowResponseBuffering = false, Timeout = TimeSpan.FromSeconds(100) };
+
             var httpClient = new HttpMessageInvoker(new SocketsHttpHandler()
             {
                 UseProxy = false,
                 AllowAutoRedirect = false,
                 AutomaticDecompression = DecompressionMethods.None,
-                UseCookies = true
-            });
-
-            var transformer = new CustomTransformer(); // or HttpTransformer.Default;
-            var requestOptions = new ForwarderRequestConfig { Timeout = TimeSpan.FromSeconds(100) };
+                UseCookies = false
+            }, disposeHandler: true);
 
             app.UseEndpoints(endpoints =>
             {
@@ -148,7 +148,7 @@ namespace Conesoft.Host.Web
             {
                 Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] scanning for Port on PID \"{site.Process.Id}\"");
                 Network_Connections.Connection connection = null;
-                for(; connection == null; connection = Network_Connections.Connection.Listening.From(site.Process))
+                for (; connection == null; connection = Network_Connections.Connection.Listening.From(site.Process))
                 {
                     await Task.Delay(500);
                 }
@@ -202,7 +202,7 @@ namespace Conesoft.Host.Web
 
         static Process RunHosted(File file, string responseUrl)
         {
-            var start = new ProcessStartInfo(file.Path, $"--urls=https://*:0/")
+            var start = new ProcessStartInfo(file.Path, $"--urls=https://127.0.0.1:0/")
             {
                 WorkingDirectory = file.Parent.Path,
                 CreateNoWindow = true,
