@@ -154,6 +154,9 @@ namespace Conesoft.Host.Web
                 }
                 Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] found Port \"{connection.Local.Port}\"");
                 services[file] = site with { Port = connection.Local.Port };
+
+                await new HttpClient().SendAsync(new HttpRequestMessage(HttpMethod.Head, $"https://{site.FullDomain}/"));
+
                 TrackServicesChanges();
             }
         }
