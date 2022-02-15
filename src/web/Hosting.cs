@@ -62,7 +62,7 @@ namespace Conesoft.Host.Web
             root = Directory.From(configuration["hosting:root"]);
         }
 
-        public async Task Begin(string responseUrl)
+        public async Task Begin()
         {
             Log.Information("watching folder {folder}", root / Deployments);
             await foreach (var files in (root / Deployments).Live(allDirectories: true).Changes())
@@ -81,17 +81,17 @@ namespace Conesoft.Host.Web
                     foreach (var file in files.Added.Concat(files.Changed).ToArray())
                     {
                         Log.Information("starting {file}", file);
-                        await StartDeploySite(file, responseUrl);
+                        await StartDeploySite(file);
                         TrackServicesChanges();
                     }
                 }
             }
         }
 
-        public void UseHostingOnApplicationBuilder(IApplicationBuilder app, string responseUrl, IHttpForwarder forwarder)
+        public void UseHostingOnApplicationBuilder(IApplicationBuilder app, IHttpForwarder forwarder)
         {
             var transformer = new CustomTransformer(); // or HttpTransformer.Default;
-            var requestOptions = new ForwarderRequestConfig { AllowResponseBuffering = false, Timeout = TimeSpan.FromSeconds(100) };
+            var requestOptions = new ForwarderRequestConfig { AllowResponseBuffering = false, ActivityTimeout = TimeSpan.FromSeconds(100) };
 
             var httpClient = new HttpMessageInvoker(new SocketsHttpHandler()
             {
@@ -107,22 +107,22 @@ namespace Conesoft.Host.Web
                 {
                     if (SiteByDomain(httpContext.Request.Host.Host) is Site site && site.Port != null)
                     {
-                        await forwarder.SendAsync(httpContext, $"https://localhost:{site.Port}", httpClient, requestOptions, transformer);
+                        await forwarder.SendAsync(httpContext, $"http://localhost:{site.Port}", httpClient, requestOptions, transformer);
                     }
                     else
                     {
                         httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-                        await httpContext.Response.WriteAsync($"");
+                        await httpContext.Response.WriteAsync($"404 not found '{httpContext.Request.Host.Host}'");
                     }
                 });
             });
 
-            var _ = Begin(responseUrl);
+            var _ = Begin();
         }
 
         Site SiteByDomain(string domain) => services.Values.OfType<Site>().Where(p => p.FullDomain == domain.ToLowerInvariant()).FirstOrDefault();
 
-        async Task StartDeploySite(File file, string responseUrl)
+        async Task StartDeploySite(File file)
         {
             await Task.Run(() =>
             {
@@ -134,7 +134,7 @@ namespace Conesoft.Host.Web
 
                     service.Hosting.Parent.Create();
                     service.Deployment.AsZip().ExtractTo(service.Hosting);
-                    service = service with { Process = RunHosted(service.Hosting.Filtered("*.exe", allDirectories: false).FirstOrDefault(), responseUrl) };
+                    service = service with { Process = RunHosted(service.Hosting.Filtered("*.exe", allDirectories: false).FirstOrDefault()) };
                     services[file] = service;
 
                     _ = ScanForPort(file);
@@ -203,9 +203,9 @@ namespace Conesoft.Host.Web
             }
         }
 
-        static Process RunHosted(File file, string responseUrl)
+        static Process RunHosted(File file)
         {
-            var start = new ProcessStartInfo(file.Path, $"--urls=https://127.0.0.1:0/")
+            var start = new ProcessStartInfo(file.Path, $"--urls=http://127.0.0.1:0/")
             {
                 WorkingDirectory = file.Parent.Path,
                 CreateNoWindow = true,

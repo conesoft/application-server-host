@@ -5,6 +5,7 @@ using Serilog;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace Conesoft.Host
@@ -32,6 +33,19 @@ namespace Conesoft.Host
                 .CreateLogger();
 
             Log.Information("App has started");
+            Log.Information("App Current Directory: {dir}", Environment.CurrentDirectory);
+
+            //// DIE, ALREADY OPEN APPS, DIE!!!
+            var currentProcess = Process.GetCurrentProcess();
+            var processesToKill = Process.GetProcessesByName(currentProcess.ProcessName).Where(p => p.Id != currentProcess.Id).ToList();
+            if(processesToKill.Any())
+            {
+                foreach (var p in processesToKill)
+                {
+                    p.Kill();
+                }
+                await Task.Delay(1000);
+            }
 
             if (Environment.CurrentDirectory == Environment.SystemDirectory)
             {
@@ -40,12 +54,6 @@ namespace Conesoft.Host
                 Log.Information("Remapping 'Current Directory' from '{old}' to '{new}'", Environment.CurrentDirectory, executableDirectory);
             }
 
-            //// DIE, ALREADY OPEN APPS, DIE!!!
-            var currentProcess = Process.GetCurrentProcess();
-            foreach (var p in Process.GetProcessesByName(currentProcess.ProcessName).Where(p => p.Id != currentProcess.Id))
-            {
-                p.Kill();
-            }
 
             Log.Information("Starting web service");
             try

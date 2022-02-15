@@ -65,8 +65,7 @@ namespace Conesoft.Host.UI
 
         void SetServerIconsByTheme(Theme theme)
         {
-            var module = Process.GetCurrentProcess().MainModule;
-            var iconPath = File.From(module.FileName).Parent / "Icons";
+           var iconPath = Directory.From(Environment.CurrentDirectory) / "Icons";
 
             Icon = theme.BaseColorScheme switch
             {
@@ -133,6 +132,19 @@ namespace Conesoft.Host.UI
         }
 
         private void Tile_ShutDownHost_Click(object sender, RoutedEventArgs e) => Close();
+
+        private void Tile_RebootHost_Click(object sender, RoutedEventArgs e)
+        {
+            ProcessStartInfo info = Application.ResourceAssembly.Location.EndsWith(".dll") switch
+            {
+                true => new("dotnet", Application.ResourceAssembly.Location + " " + string.Join(" ", Environment.GetCommandLineArgs())),
+                false => new(Application.ResourceAssembly.Location, string.Join(" ", Environment.GetCommandLineArgs()))
+            };
+            info.WorkingDirectory = Environment.CurrentDirectory;
+            info.UseShellExecute = true;
+            Process.Start(info);
+            Close();
+        }
 
         private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e) => Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri)
         {

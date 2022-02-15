@@ -153,6 +153,15 @@
                             mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
                             Background="{DynamicResource MahApps.Brushes.Accent3}"
                             HorizontalTitleAlignment="Right"
+                            Click="Tile_RebootHost_Click">
+                            <fa:FontAwesomeIcon SolidIcon="RedoAlt" FontSize="40" />
+                        </mah:Tile>
+
+                        <mah:Tile
+                            Margin="3"
+                            mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
+                            Background="{DynamicResource MahApps.Brushes.Accent3}"
+                            HorizontalTitleAlignment="Right"
                             Click="Tile_ShutDownHost_Click">
                             <fa:FontAwesomeIcon SolidIcon="PowerOff" FontSize="40" />
                         </mah:Tile>
