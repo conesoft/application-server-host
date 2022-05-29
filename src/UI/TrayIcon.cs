@@ -1,4 +1,5 @@
 ﻿using Conesoft.Host.Web;
+using Microsoft.Win32;
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -26,6 +27,18 @@ namespace Conesoft.Host.UI
             this.window = window;
             window.Closing += (sender, e) => notifyIcon.Visible = false;
             window.StateChanged += (sender, e) => notifyIcon.Visible = window.WindowState == WindowState.Minimized;
+            SystemEvents.DisplaySettingsChanged += RefreshIcon;
+            SystemEvents.PowerModeChanged += RefreshIcon;
+            SystemEvents.SessionSwitch += RefreshIcon;
+            SystemEvents.UserPreferenceChanged += RefreshIcon;
+        }
+
+        private void RefreshIcon(object sender, EventArgs e)
+        {
+            if(notifyIcon != null)
+            {
+                notifyIcon.Icon = IconFromTheme;
+            }
         }
 
         public void UpdateTheme(string baseColorScheme)

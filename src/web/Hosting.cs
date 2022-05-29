@@ -122,9 +122,9 @@ namespace Conesoft.Host.Web
 
         Site SiteByDomain(string domain) => services.Values.OfType<Site>().Where(p => p.FullDomain == domain.ToLowerInvariant()).FirstOrDefault();
 
-        async Task StartDeploySite(File file)
+        async Task StartDeploySite(File file, bool waitForPort = false)
         {
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 if (Service.FromFile(file) is Service service)
                 {
@@ -137,7 +137,11 @@ namespace Conesoft.Host.Web
                     service = service with { Process = RunHosted(service.Hosting.Filtered("*.exe", allDirectories: false).FirstOrDefault()) };
                     services[file] = service;
 
-                    _ = ScanForPort(file);
+                    var portTask = ScanForPort(file);
+                    if(waitForPort)
+                    {
+                        await portTask;
+                    }
                 }
             });
         }
@@ -155,13 +159,36 @@ namespace Conesoft.Host.Web
                 Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] found Port \"{connection.Local.Port}\"");
                 services[file] = site with { Port = connection.Local.Port };
 
-                await new HttpClient().SendAsync(new HttpRequestMessage(HttpMethod.Head, $"https://{site.FullDomain}/"));
-
                 TrackServicesChanges();
+
+                await new HttpClient().SendAsync(new HttpRequestMessage(HttpMethod.Head, $"https://{site.FullDomain}/"));
             }
         }
 
+        public async Task RestartSite(Site site, bool waitForPort = false)
+        {
+            Log.Information($"restarting {site.Name}");
 
+            if (services.FirstOrDefault(s => s.Value == site) is { Key: not null } entry)
+            {
+                var file = entry.Key;
+
+                if(file == null)
+                {
+                    throw new Exception();
+                }
+
+                Log.Information("stopping {file}", file);
+                await StopDeploySite(file);
+                Log.Information("stopped {file}", file);
+                TrackServicesChanges();
+
+                Log.Information("starting {file}", file);
+                await StartDeploySite(file, waitForPort);
+                TrackServicesChanges();
+            }
+
+        }
 
         async Task StopDeploySite(File file)
         {

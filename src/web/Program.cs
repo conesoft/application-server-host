@@ -60,6 +60,8 @@ namespace Conesoft.Host.Web
                 Log.Information("using kestrel for public https");
                 webBuilder.UseKestrel(options =>
                 {
+                    options.Limits.KeepAliveTimeout = TimeSpan.MaxValue;
+
                     options.Listen(IPAddress.Any, new Uri(urls.https).Port, listenOptions =>
                     {
                         Log.Information("set up port {port}", new Uri(urls.https).Port);

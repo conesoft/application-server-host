@@ -247,6 +247,29 @@ namespace Conesoft.Host.UI
             Process.Start(new ProcessStartInfo(@"D:\Hosting\log.txt") { UseShellExecute = true });
         }
 
+        private void ContextMenu_Open_Click(object sender, RoutedEventArgs e)
+        {
+            var contextMenu = (sender as MenuItem);
+            var site = contextMenu.Tag as Web.Hosting.Site;
+            Process.Start(new ProcessStartInfo("https://" + site.FullDomain)
+            {
+                UseShellExecute = true,
+            });
+        }
+
+        private async void ContextMenu_Restart_Click(object sender, RoutedEventArgs e)
+        {
+            var hosting = (Tag as App.HostingTag).Hosting;
+            var menuItem = (sender as MenuItem);
+            var site = menuItem.Tag as Web.Hosting.Site;
+
+            menuItem.IsEnabled = false;
+
+            await hosting.RestartSite(site, waitForPort: true);
+
+            menuItem.IsEnabled = true;
+        }
+
         private void CloseAllFlyouts(Flyout butToggleThisOne = null)
         {
             foreach (var flyout in Flyouts.FindChildren<Flyout>())

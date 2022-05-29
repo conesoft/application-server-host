@@ -42,8 +42,6 @@
         <Grid Margin="64">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
-                <RowDefinition Height="auto"/>
-                <RowDefinition Height="auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
@@ -52,48 +50,57 @@
             <Grid Grid.Row="1" Margin="16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition MaxWidth="360" Width="*"/>
-                    <ColumnDefinition MaxWidth="360" Width="*"/>
-                    <ColumnDefinition MaxWidth="360" Width="*"/>
+                    <ColumnDefinition MaxWidth="540" Width="*"/>
+                    <ColumnDefinition MaxWidth="540" Width="*"/>
+                    <ColumnDefinition MaxWidth="540" Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Row="0" Grid.Column="0" FontSize="32">Websites</TextBlock>
 
-                <ItemsControl Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Domains}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <ItemsControl ItemsSource="{Binding Subdomains}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <mah:Tile Title="{Binding RelevantDomainPart}"
-                                            Margin="3"
-                                            mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                                            Background="{DynamicResource MahApps.Brushes.Accent}"
-                                            Tag="{Binding FullDomain}"
-                                            Click="Tile_Click">
-                                            <Grid>
-                                                <fa:FontAwesomeIcon SolidIcon="Stream" FontSize="40" />
-                                                <StackPanel Margin="5">
-                                                    <TextBlock Opacity="0.5" Text="{Binding ProcessDescription}" FontSize="10" FontWeight="Light" HorizontalAlignment="Right" VerticalAlignment="Top"/>
-                                                    <TextBlock Opacity="0.5" Text="{Binding ProcessIdDescription}" FontSize="10" FontWeight="Light" HorizontalAlignment="Right" VerticalAlignment="Top"/>
-                                                    <TextBlock Opacity="0.5" Text="{Binding PortDescription}" FontSize="10" FontWeight="Light" HorizontalAlignment="Right" VerticalAlignment="Top"/>
-                                                </StackPanel>
-                                            </Grid>
-                                        </mah:Tile>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel Margin="0 16"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <ScrollViewer Grid.Row="1" Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Domains}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <ItemsControl ItemsSource="{Binding Subdomains}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <mah:Tile Title="{Binding RelevantDomainPart}"
+                                                Margin="3"
+                                                mah:ControlsHelper.MouseOverBorderBrush="{DynamicResource MahApps.Brushes.ThemeForeground}"
+                                                Background="{DynamicResource MahApps.Brushes.Accent}"
+                                                Tag="{Binding FullDomain}"
+                                                Click="Tile_Click">
+                                                <Grid>
+                                                    <fa:FontAwesomeIcon SolidIcon="Stream" FontSize="40" />
+                                                    <StackPanel Margin="5">
+                                                        <TextBlock Opacity="0.5" Text="{Binding ProcessDescription}" FontSize="10" FontWeight="Light" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                                                        <TextBlock Opacity="0.5" Text="{Binding ProcessIdDescription}" FontSize="10" FontWeight="Light" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                                                        <TextBlock Opacity="0.5" Text="{Binding PortDescription}" FontSize="10" FontWeight="Light" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                                <mah:Tile.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Name="Open" Header="open" Click="ContextMenu_Open_Click" Tag="{Binding}"/>
+                                                        <MenuItem Name="Restart" Header="restart"  Click="ContextMenu_Restart_Click" Tag="{Binding}"/>
+                                                    </ContextMenu>
+                                                </mah:Tile.ContextMenu>
+                                            </mah:Tile>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Margin="0 16"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    
+                </ScrollViewer>
 
                 <TextBlock Grid.Row="0" Grid.Column="1" FontSize="32">Services</TextBlock>
 
