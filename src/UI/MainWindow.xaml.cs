@@ -43,6 +43,8 @@ namespace Conesoft.Host.UI
         {
             base.OnInitialized(e);
 
+            DotNetVersion.Text = $"running on .NET {Environment.Version.Major}";
+
             Log.Information("loading settings ...");
             try
             {

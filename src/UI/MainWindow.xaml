@@ -31,13 +31,15 @@
             </Image.Effect>
         </Image>
 
-        <TextBlock HorizontalAlignment="Right"
-                   VerticalAlignment="Bottom"
-                   FontSize="40"
-                   Margin="20 12"
-                   Opacity="0.5">
-            <Hyperlink TextDecorations="None" RequestNavigate="Hyperlink_RequestNavigate" NavigateUri="https://conesoft.github.io/branding/">©</Hyperlink>
-        </TextBlock>
+        <StackPanel HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom"
+                    Margin="20 12"
+                    Opacity="0.5">
+            <TextBlock FontSize="40" TextAlignment="Right">
+                <Hyperlink TextDecorations="None" RequestNavigate="Hyperlink_RequestNavigate" NavigateUri="https://conesoft.github.io/branding/">©</Hyperlink>
+            </TextBlock>
+            <TextBlock x:Name="DotNetVersion">{dotnetversion}</TextBlock>
+        </StackPanel>
 
         <Grid Margin="64">
             <Grid.RowDefinitions>
