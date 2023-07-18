@@ -2,19 +2,18 @@
 using Microsoft.Extensions.DependencyInjection;
 using Yarp.ReverseProxy.Forwarder;
 
-namespace Conesoft.Host.Web
+namespace Conesoft.Server_Host.Web;
+
+public static class IApplicationBuilderHostingExtensions
 {
-    public static class IApplicationBuilderHostingExtensions
+    public static IApplicationBuilder UseHosting(this IApplicationBuilder app, IHttpForwarder forwarder)
     {
-        public static IApplicationBuilder UseHosting(this IApplicationBuilder app, IHttpForwarder forwarder)
-        {
-            var hosting = app.ApplicationServices.GetService<Hosting>();
+        var hosting = app.ApplicationServices.GetService<Hosting>();
 
-            app.UseRouting();
+        app.UseRouting();
 
-            hosting.UseHostingOnApplicationBuilder(app, forwarder);
+        hosting.UseHostingOnApplicationBuilder(app, forwarder);
 
-            return app;
-        }
+        return app;
     }
 }

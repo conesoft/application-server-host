@@ -5,8 +5,8 @@
     <TargetFramework>net7.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
-    <AssemblyName>Conesoft.Host</AssemblyName>
-    <RootNamespace>Conesoft.Host</RootNamespace>
+    <AssemblyName>Conesoft - Server Host</AssemblyName>
+    <RootNamespace>Conesoft.Server_Host</RootNamespace>
     <Authors>davepermen</Authors>
     <Company>Conesoft</Company>
     <UserSecretsId>df8fd857-8c81-4dc7-b42d-26a446ffe578</UserSecretsId>

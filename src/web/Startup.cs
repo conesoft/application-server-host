@@ -7,49 +7,48 @@ using System;
 using System.Linq;
 using Yarp.ReverseProxy.Forwarder;
 
-namespace Conesoft.Host.Web
+namespace Conesoft.Server_Host.Web;
+
+public class Startup
 {
-    public class Startup
+    readonly Uri httpUrl;
+    readonly Uri httpsUrl;
+
+    public Startup(IConfiguration configuration)
     {
-        readonly Uri httpUrl;
-        readonly Uri httpsUrl;
+        httpUrl = new("http://localhost");
+        httpsUrl = new("https://localhost");
 
-        public Startup(IConfiguration configuration)
+        var webHostDefaults = configuration[WebHostDefaults.ServerUrlsKey];
+        if(webHostDefaults != null)
         {
-            httpUrl = new("http://localhost");
-            httpsUrl = new("https://localhost");
-
-            var webHostDefaults = configuration[WebHostDefaults.ServerUrlsKey];
-            if(webHostDefaults != null)
-            {
-                httpUrl = new(webHostDefaults.Split(';').FirstOrDefault(u => u.StartsWith("http://")) ?? httpUrl.ToString());
-                httpsUrl = new(webHostDefaults.Split(';').FirstOrDefault(u => u.StartsWith("https://")) ?? httpsUrl.ToString());
-            }
+            httpUrl = new(webHostDefaults.Split(';').FirstOrDefault(u => u.StartsWith("http://")) ?? httpUrl.ToString());
+            httpsUrl = new(webHostDefaults.Split(';').FirstOrDefault(u => u.StartsWith("https://")) ?? httpsUrl.ToString());
         }
+    }
 
-        public void ConfigureServices(IServiceCollection services)
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddHosting();
+
+        services.AddHsts(config =>
         {
-            services.AddHosting();
-
-            services.AddHsts(config =>
-            {
-                config.IncludeSubDomains = true;
-                config.MaxAge = System.TimeSpan.FromDays(365);
-                config.Preload = true;
-            });
-            services.AddHttpsRedirection(config =>
-            {
-                config.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
-                config.HttpsPort = httpsUrl.Port;
-            });
-        }
-
-        public void Configure(IApplicationBuilder app, IHttpForwarder forwarder)
+            config.IncludeSubDomains = true;
+            config.MaxAge = System.TimeSpan.FromDays(365);
+            config.Preload = true;
+        });
+        services.AddHttpsRedirection(config =>
         {
-            app.UseHsts();
-            app.UseHttpsRedirection();
-            
-            app.UseHosting(forwarder);
-        }
+            config.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
+            config.HttpsPort = httpsUrl.Port;
+        });
+    }
+
+    public void Configure(IApplicationBuilder app, IHttpForwarder forwarder)
+    {
+        app.UseHsts();
+        app.UseHttpsRedirection();
+        
+        app.UseHosting(forwarder);
     }
 }

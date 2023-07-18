@@ -1,4 +1,4 @@
-﻿using Conesoft.Host.Web;
+﻿using Conesoft.Server_Host.Web;
 using Microsoft.Win32;
 using System;
 using System.Diagnostics;
@@ -7,92 +7,91 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Forms;
 
-namespace Conesoft.Host.UI
+namespace Conesoft.Server_Host.UI;
+
+public class TrayIcon
 {
-    public class TrayIcon
+    NotifyIcon notifyIcon;
+
+    Window window;
+    string theme;
+    Icon IconFromTheme => theme switch
     {
-        NotifyIcon notifyIcon;
+        "Light" => new Icon("Icons/Server.Dark.ico"),
+        "Dark" => new Icon("Icons/Server.Light.ico"),
+        _ => null
+    };
 
-        Window window;
-        string theme;
-        Icon IconFromTheme => theme switch
-        {
-            "Light" => new Icon("Icons/Server.Dark.ico"),
-            "Dark" => new Icon("Icons/Server.Light.ico"),
-            _ => null
-        };
+    public void AttachToWindow(Window window)
+    {
+        this.window = window;
+        window.Closing += (sender, e) => notifyIcon.Visible = false;
+        window.StateChanged += (sender, e) => notifyIcon.Visible = window.WindowState == WindowState.Minimized;
+        SystemEvents.DisplaySettingsChanged += RefreshIcon;
+        SystemEvents.PowerModeChanged += RefreshIcon;
+        SystemEvents.SessionSwitch += RefreshIcon;
+        SystemEvents.UserPreferenceChanged += RefreshIcon;
+    }
 
-        public void AttachToWindow(Window window)
+    private void RefreshIcon(object sender, EventArgs e)
+    {
+        if(notifyIcon != null)
         {
-            this.window = window;
-            window.Closing += (sender, e) => notifyIcon.Visible = false;
-            window.StateChanged += (sender, e) => notifyIcon.Visible = window.WindowState == WindowState.Minimized;
-            SystemEvents.DisplaySettingsChanged += RefreshIcon;
-            SystemEvents.PowerModeChanged += RefreshIcon;
-            SystemEvents.SessionSwitch += RefreshIcon;
-            SystemEvents.UserPreferenceChanged += RefreshIcon;
+            notifyIcon.Icon = IconFromTheme;
         }
+    }
 
-        private void RefreshIcon(object sender, EventArgs e)
+    public void UpdateTheme(string baseColorScheme)
+    {
+        theme = baseColorScheme;
+        if (notifyIcon != null)
         {
-            if(notifyIcon != null)
-            {
-                notifyIcon.Icon = IconFromTheme;
-            }
+            notifyIcon.Icon = IconFromTheme;
+            notifyIcon.ContextMenuStrip.BackColor = theme == "Dark" ? Color.Black : Color.White;
+            notifyIcon.ContextMenuStrip.ForeColor = theme == "Dark" ? Color.White : Color.Black;
+            notifyIcon.ContextMenuStrip.Renderer = new ToolStripProfessionalRenderer(theme == "Dark" ? new MyDarkColorTable() : new MyLightColorTable());
         }
+    }
 
-        public void UpdateTheme(string baseColorScheme)
+    public void UpdateContextMenu(IOrderedEnumerable<IGrouping<string, Hosting.Site>> sorted)
+    {
+        if (notifyIcon == null)
         {
-            theme = baseColorScheme;
-            if (notifyIcon != null)
+            notifyIcon = new()
             {
-                notifyIcon.Icon = IconFromTheme;
-                notifyIcon.ContextMenuStrip.BackColor = theme == "Dark" ? Color.Black : Color.White;
-                notifyIcon.ContextMenuStrip.ForeColor = theme == "Dark" ? Color.White : Color.Black;
-                notifyIcon.ContextMenuStrip.Renderer = new ToolStripProfessionalRenderer(theme == "Dark" ? new MyDarkColorTable() : new MyLightColorTable());
-            }
-        }
+                Visible = false,
+                ContextMenuStrip = new()
+            };
+            UpdateTheme("Dark");
+            notifyIcon.ContextMenuStrip.Items.Add(new ToolStripMenuItem("open app", null, new EventHandler((a, b) => window.WindowState = WindowState.Normal)));
 
-        public void UpdateContextMenu(IOrderedEnumerable<IGrouping<string, Hosting.Site>> sorted)
-        {
-            if (notifyIcon == null)
+            foreach (var domain in sorted)
             {
-                notifyIcon = new()
+                notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
+                foreach (var subdomain in domain)
                 {
-                    Visible = false,
-                    ContextMenuStrip = new()
-                };
-                UpdateTheme("Dark");
-                notifyIcon.ContextMenuStrip.Items.Add(new ToolStripMenuItem("open app", null, new EventHandler((a, b) => window.WindowState = WindowState.Normal)));
-
-                foreach (var domain in sorted)
-                {
-                    notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
-                    foreach (var subdomain in domain)
-                    {
-                        notifyIcon.ContextMenuStrip.Items.Add(
-                            new ToolStripMenuItem($"go to {subdomain.FullDomain}", null, new EventHandler((a, b) => Process.Start(new ProcessStartInfo($"https://{subdomain.FullDomain}")
-                            {
-                                UseShellExecute = true,
-                            })))
-                        );
-                    }
+                    notifyIcon.ContextMenuStrip.Items.Add(
+                        new ToolStripMenuItem($"go to {subdomain.FullDomain}", null, new EventHandler((a, b) => Process.Start(new ProcessStartInfo($"https://{subdomain.FullDomain}")
+                        {
+                            UseShellExecute = true,
+                        })))
+                    );
                 }
-
-                notifyIcon.ContextMenuStrip.Items.AddRange(new ToolStripItem[]
-                {
-                    new ToolStripSeparator(),
-                    new ToolStripMenuItem("exit", null, new EventHandler((a, b) => System.Windows.Application.Current.Shutdown()))
-                });
-
-                notifyIcon.MouseClick += (sender, e) =>
-                {
-                    if (e.Button == MouseButtons.Left)
-                    {
-                        window.WindowState = WindowState.Normal;
-                    }
-                };
             }
+
+            notifyIcon.ContextMenuStrip.Items.AddRange(new ToolStripItem[]
+            {
+                new ToolStripSeparator(),
+                new ToolStripMenuItem("exit", null, new EventHandler((a, b) => System.Windows.Application.Current.Shutdown()))
+            });
+
+            notifyIcon.MouseClick += (sender, e) =>
+            {
+                if (e.Button == MouseButtons.Left)
+                {
+                    window.WindowState = WindowState.Normal;
+                }
+            };
         }
     }
 }

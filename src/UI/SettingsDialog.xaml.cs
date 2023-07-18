@@ -1,27 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+﻿namespace Conesoft.Server_Host.UI;
 
-namespace Conesoft.Host.UI
+/// <summary>
+/// Interaktionslogik für SettingsDialog.xaml
+/// </summary>
+public partial class SettingsDialog : MahApps.Metro.Controls.Dialogs.CustomDialog
 {
-    /// <summary>
-    /// Interaktionslogik für SettingsDialog.xaml
-    /// </summary>
-    public partial class SettingsDialog : MahApps.Metro.Controls.Dialogs.CustomDialog
+    public SettingsDialog()
     {
-        public SettingsDialog()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
     }
 }

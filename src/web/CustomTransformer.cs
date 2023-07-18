@@ -4,14 +4,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Yarp.ReverseProxy.Forwarder;
 
-namespace Conesoft.Host.Web
+namespace Conesoft.Server_Host.Web;
+
+class CustomTransformer : HttpTransformer
 {
-    class CustomTransformer : HttpTransformer
+    public override async ValueTask TransformRequestAsync(HttpContext httpContext, HttpRequestMessage proxyRequest, string destinationPrefix, CancellationToken cancellationToken)
     {
-        public override async ValueTask TransformRequestAsync(HttpContext httpContext, HttpRequestMessage proxyRequest, string destinationPrefix, CancellationToken cancellationToken)
-        {
-            await base.TransformRequestAsync(httpContext, proxyRequest, destinationPrefix, cancellationToken);
-            proxyRequest.Headers.Host = null;
-        }
+        await base.TransformRequestAsync(httpContext, proxyRequest, destinationPrefix, cancellationToken);
+        proxyRequest.Headers.Host = null;
     }
 }
