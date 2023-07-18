@@ -77,13 +77,6 @@ namespace Conesoft.Host.UI
                 "Dark" => new BitmapImage(new Uri(@"Icons\Server.Light.ico", UriKind.Relative)),
                 _ => new BitmapImage()
             };
-
-            //MessageBox.Show(theme.BaseColorScheme switch
-            //{
-            //    "Light" => (iconPath / Filename.From("Server.Dark", "ico")).Path,
-            //    "Dark" => (iconPath / Filename.From("Server.Light", "ico")).Path,
-            //    _ => "error"
-            //});
         }
 
         protected override void OnStateChanged(EventArgs e)
