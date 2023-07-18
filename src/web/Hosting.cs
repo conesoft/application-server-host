@@ -43,6 +43,8 @@ namespace Conesoft.Host.Web
             public string RelevantDomainPart => Subdomain.ToLowerInvariant() == MainDomainPart ? Domain : Subdomain;
             public override Directory Hosting => base.Hosting.Parent / Domain / Subdomain;
 
+            public Uri ProxyTo { get; set; }
+
             static string MainDomainPart => "main";
 
             public string PortDescription => Port.HasValue ? $":{Port.Value}" : "";
@@ -105,14 +107,15 @@ namespace Conesoft.Host.Web
             {
                 endpoints.Map("/{**catch-all}", async httpContext =>
                 {
-                    if (SiteByDomain(httpContext.Request.Host.Host) is Site site && site.Port != null)
+                    if (SiteByDomain(httpContext.Request.Host.Host) is Site site && (site.Port != null || site.ProxyTo != null))
                     {
-                        await forwarder.SendAsync(httpContext, $"http://localhost:{site.Port}", httpClient, requestOptions, transformer);
+                        var uri = site.Port != null ? $"https://localhost:{site.Port}" : site.ProxyTo.ToString();
+                        await forwarder.SendAsync(httpContext, uri, httpClient, requestOptions, transformer);
                     }
                     else
                     {
                         httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-                        await httpContext.Response.WriteAsync($"404 not found '{httpContext.Request.Host.Host}'");
+                        await httpContext.Response.WriteAsync($$"""<html><head><meta http-equiv="refresh" content="1"><style>html{color-scheme:dark;font:2rem monospace;display:grid;height:100%;place-content:center}</style></head><body>404 not found '{{httpContext.Request.Host.Host}}'</body></html>""");
                     }
                 });
             });
@@ -132,15 +135,27 @@ namespace Conesoft.Host.Web
 
                     file.WaitTillReady();
 
-                    service.Hosting.Parent.Create();
-                    service.Deployment.AsZip().ExtractTo(service.Hosting);
-                    service = service with { Process = RunHosted(service.Hosting.Filtered("*.exe", allDirectories: false).FirstOrDefault()) };
-                    services[file] = service;
+                    // todo: implement .txt website handling here
 
-                    var portTask = ScanForPort(file);
-                    if(waitForPort)
+                    switch (file.Extension.ToLower())
                     {
-                        await portTask;
+                        case ".zip":
+                            service.Hosting.Parent.Create();
+                            service.Deployment.AsZip().ExtractTo(service.Hosting);
+                            service = service with { Process = RunHosted(service.Hosting.Filtered("*.exe", allDirectories: false).FirstOrDefault()) };
+                            services[file] = service;
+
+                            var portTask = ScanForPort(file);
+                            if (waitForPort)
+                            {
+                                await portTask;
+                            }
+                            break;
+
+                        case ".txt":
+                            var uri = new Uri(await file.ReadText(), UriKind.Absolute);
+                            services[file] = (service as Site) with { ProxyTo = uri };
+                            break;
                     }
                 }
             });
@@ -173,7 +188,7 @@ namespace Conesoft.Host.Web
             {
                 var file = entry.Key;
 
-                if(file == null)
+                if (file == null)
                 {
                     throw new Exception();
                 }
@@ -210,13 +225,17 @@ namespace Conesoft.Host.Web
                         }
                         Log.Information("removing service");
                         services.Remove(file);
-                        Log.Information("deleting service");
-                        service.Hosting.Delete();
 
-                        Log.Information("cleaning up folders");
-                        if (!service.Hosting.Parent.AllFiles.Any() && service.Hosting.Parent.Parent != root / Live)
+                        if (service.Hosting.Exists)
                         {
-                            service.Hosting.Parent.Delete();
+                            Log.Information("deleting service");
+                            service.Hosting.Delete();
+
+                            Log.Information("cleaning up folders");
+                            if (!service.Hosting.Parent.AllFiles.Any() && service.Hosting.Parent.Parent != root / Live)
+                            {
+                                service.Hosting.Parent.Delete();
+                            }
                         }
                         Log.Information("done");
                     }
@@ -232,7 +251,7 @@ namespace Conesoft.Host.Web
 
         static Process RunHosted(File file)
         {
-            var start = new ProcessStartInfo(file.Path, $"--urls=http://127.0.0.1:0/")
+            var start = new ProcessStartInfo(file.Path, $"--urls=https://127.0.0.1:0/")
             {
                 WorkingDirectory = file.Parent.Path,
                 CreateNoWindow = true,

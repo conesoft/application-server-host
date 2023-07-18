@@ -101,7 +101,7 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    
+
                 </ScrollViewer>
 
                 <TextBlock Grid.Row="0" Grid.Column="1" FontSize="32">Services</TextBlock>

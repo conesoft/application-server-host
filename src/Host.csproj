@@ -7,21 +7,21 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>Conesoft.Host</AssemblyName>
     <RootNamespace>Conesoft.Host</RootNamespace>
-    <ApplicationIcon>Icons/Server.Dark.ico</ApplicationIcon>
     <Authors>davepermen</Authors>
     <Company>Conesoft</Company>
     <UserSecretsId>df8fd857-8c81-4dc7-b42d-26a446ffe578</UserSecretsId>
+    <ApplicationIcon>Icons\Server.Light.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Conesoft.DNSimple" Version="1.0.8" />
-    <PackageReference Include="Conesoft.Files" Version="1.7.0" />
+    <PackageReference Include="Conesoft.Files" Version="1.7.6" />
     <PackageReference Include="Conesoft.Ipify" Version="1.0.5" />
     <PackageReference Include="Conesoft.Network-Connections" Version="1.0.9" />
     <PackageReference Include="MahApps.Metro" Version="2.4.9" />
     <PackageReference Include="Meziantou.WpfFontAwesome" Version="5.15.4" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-    <PackageReference Include="Yarp.ReverseProxy" Version="1.1.1" />
+    <PackageReference Include="Yarp.ReverseProxy" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +31,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Icons\*.*" />
+    <Content Include="Icons\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>

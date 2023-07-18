@@ -30,8 +30,8 @@ namespace Conesoft.Host.UI
             CloseAllFlyouts();
 
             ThemeManager.Current.ThemeSyncMode = ThemeSyncMode.SyncWithAppMode;
-            ThemeManager.Current.SyncTheme();
             ThemeManager.Current.ThemeChanged += (sender, e) => SetServerIconsByTheme(e.NewTheme);
+            ThemeManager.Current.SyncTheme();
             SetServerIconsByTheme(ThemeManager.Current.DetectTheme());
 
             trayIcon.AttachToWindow(this);
@@ -67,15 +67,23 @@ namespace Conesoft.Host.UI
 
         void SetServerIconsByTheme(Theme theme)
         {
-           var iconPath = Directory.From(Environment.CurrentDirectory) / "Icons";
+            var iconPath = Directory.From(Environment.CurrentDirectory) / "Icons";
+
+            trayIcon.UpdateTheme(theme.BaseColorScheme);
 
             Icon = theme.BaseColorScheme switch
             {
-                "Light" => new BitmapImage(new Uri((iconPath / Filename.From("Server.Dark", "png")).Path)),
-                "Dark" => new BitmapImage(new Uri((iconPath / Filename.From("Server.Light", "png")).Path)),
+                "Light" => new BitmapImage(new Uri(@"Icons\Server.Dark.ico", UriKind.Relative)),
+                "Dark" => new BitmapImage(new Uri(@"Icons\Server.Light.ico", UriKind.Relative)),
                 _ => new BitmapImage()
             };
-            trayIcon.UpdateTheme(theme.BaseColorScheme);
+
+            //MessageBox.Show(theme.BaseColorScheme switch
+            //{
+            //    "Light" => (iconPath / Filename.From("Server.Dark", "ico")).Path,
+            //    "Dark" => (iconPath / Filename.From("Server.Light", "ico")).Path,
+            //    _ => "error"
+            //});
         }
 
         protected override void OnStateChanged(EventArgs e)
@@ -190,7 +198,7 @@ namespace Conesoft.Host.UI
         {
             var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
             var appName = Assembly.GetEntryAssembly().GetName().Name;
-            var appLocation = Process.GetCurrentProcess().MainModule.FileName;
+            var appLocation = Environment.ProcessPath;
             if (settings.AutoStart)
             {
                 if (key.GetValue(appName) == null)
@@ -200,7 +208,10 @@ namespace Conesoft.Host.UI
             }
             else
             {
-                key.DeleteValue(appName);
+                if (key.GetValue(appName) != null)
+                {
+                    key.DeleteValue(appName);
+                }
             }
 
         }
