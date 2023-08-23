@@ -48,10 +48,17 @@ public class Program
             {
                 await foreach (var files in certificatesPath.Live().Changes())
                 {
-                    if(files.ThereAreChanges)
+                    if (files.ThereAreChanges)
                     {
                         Log.Information("loading certificates");
-                        certificates = files.All.ToDictionary(c => c.NameWithoutExtension, c => new X509Certificate2(c.Path, password));
+                        try
+                        {
+                            certificates = files.All.ToDictionary(c => c.NameWithoutExtension, c => new X509Certificate2(c.Path, password));
+                        }
+                        catch (Exception)
+                        {
+                            Log.Information("failed to load certificates");
+                        }
                         Log.Information("loaded {count} certificates", certificates.Count);
                     }
                 }
@@ -70,6 +77,7 @@ public class Program
                         httpsOptions.ServerCertificateSelector = (context, dnsName) =>
                         {
                             var domain = dnsName.Replace(".localhost", "");
+                            Log.Information($"selecting certificate for {domain}");
                             return certificates.ContainsKey(domain) ? certificates[domain] : null;
                         };
                     });
