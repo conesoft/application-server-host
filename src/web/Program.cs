@@ -29,16 +29,23 @@ public class Program
         {
             Log.Information("configuring web host");
 
-            var webHostDefaults = webBuilder.GetSetting(WebHostDefaults.ServerUrlsKey) ?? "https://localhost:443/;http://localhost:80/";
+            var defaults = webBuilder.GetSetting(WebHostDefaults.ServerUrlsKey);
 
-            var urls = (all: webHostDefaults.Split(';'), http: "", https: "");
-            urls.http = urls.all.FirstOrDefault(u => u.StartsWith("http:"));
-            urls.https = urls.all.FirstOrDefault(u => u.StartsWith("https:"));
+            var urls = new
+            {
+                http = defaults?.Split(";").FirstOrDefault(u => u.StartsWith("http:")) ?? "http://localhost:80",
+                https = defaults?.Split(";").FirstOrDefault(u => u.StartsWith("https:")) ?? "https://localhost:443"
+            };
 
             Log.Information("urls: http = {http}, https = {https}", urls.http, urls.https);
 
             var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-            var root = Directory.From(configuration["hosting:root"]);
+            var rootValue = configuration["hosting:root"];
+            if(rootValue == null)
+            {
+                throw new NullReferenceException("Required setting 'hosting:root' not found in appsettings.json");
+            }
+            var root = Directory.From(rootValue);
 
             configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").AddJsonFile((root / "Settings" / Filename.From("hosting", "json")).Path).Build();
             var password = configuration["hosting:certificate-password"];
@@ -76,9 +83,13 @@ public class Program
                     {
                         httpsOptions.ServerCertificateSelector = (context, dnsName) =>
                         {
-                            var domain = dnsName.Replace(".localhost", "");
-                            Log.Information($"selecting certificate for {domain}");
-                            return certificates.ContainsKey(domain) ? certificates[domain] : null;
+                            if (dnsName != null)
+                            {
+                                var domain = dnsName.Replace(".localhost", "");
+                                Log.Information($"selecting certificate for {domain}");
+                                return certificates.ContainsKey(domain) ? certificates[domain] : null;
+                            }
+                            return null;
                         };
                     });
                 });

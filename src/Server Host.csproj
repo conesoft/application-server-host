@@ -1,38 +1,39 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net7.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
-    <AssemblyName>Conesoft - Server Host</AssemblyName>
-    <RootNamespace>Conesoft.Server_Host</RootNamespace>
-    <Authors>davepermen</Authors>
-    <Company>Conesoft</Company>
-    <UserSecretsId>df8fd857-8c81-4dc7-b42d-26a446ffe578</UserSecretsId>
-    <ApplicationIcon>Icons\Server.Light.ico</ApplicationIcon>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net7.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<UseWindowsForms>true</UseWindowsForms>
+		<Nullable>enable</Nullable>
+		<AssemblyName>Conesoft - Server Host</AssemblyName>
+		<RootNamespace>Conesoft.Server_Host</RootNamespace>
+		<Authors>davepermen</Authors>
+		<Company>Conesoft</Company>
+		<UserSecretsId>df8fd857-8c81-4dc7-b42d-26a446ffe578</UserSecretsId>
+		<ApplicationIcon>Icons\Server.Light.ico</ApplicationIcon>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Conesoft.DNSimple" Version="1.1.0" />
-    <PackageReference Include="Conesoft.Files" Version="1.8.1" />
-    <PackageReference Include="Conesoft.Ipify" Version="1.0.6" />
-    <PackageReference Include="Conesoft.Network-Connections" Version="1.1.0" />
-    <PackageReference Include="MahApps.Metro" Version="2.4.10" />
-    <PackageReference Include="Meziantou.WpfFontAwesome" Version="5.15.4" />
-    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-    <PackageReference Include="Yarp.ReverseProxy" Version="2.0.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Conesoft.DNSimple" Version="1.1.0" />
+		<PackageReference Include="Conesoft.Files" Version="1.8.2" />
+		<PackageReference Include="Conesoft.Ipify" Version="1.0.6" />
+		<PackageReference Include="Conesoft.Network-Connections" Version="1.1.0" />
+		<PackageReference Include="MahApps.Metro" Version="2.4.10" />
+		<PackageReference Include="Meziantou.WpfFontAwesome" Version="5.15.4" />
+		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+		<PackageReference Include="Yarp.ReverseProxy" Version="2.0.1" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <AdditionalFiles Include="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AdditionalFiles>
-  </ItemGroup>
+	<ItemGroup>
+		<AdditionalFiles Include="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</AdditionalFiles>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Content Include="Icons\*.*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="Icons\*.*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 </Project>

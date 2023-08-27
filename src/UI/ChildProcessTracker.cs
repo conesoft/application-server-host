@@ -20,9 +20,9 @@ public static class ChildProcessTracker
     /// that we are tracking will be automatically killed, too. If the child process terminates
     /// first, that's fine, too.</summary>
     /// <param name="process"></param>
-    public static Process Track(Process process)
+    public static Process? Track(Process? process)
     {
-        if (s_jobHandle != IntPtr.Zero)
+        if (s_jobHandle != IntPtr.Zero && process != null)
         {
             bool success = AssignProcessToJobObject(s_jobHandle, process.Handle);
             if (!success && !process.HasExited)

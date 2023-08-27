@@ -15,26 +15,24 @@ namespace Conesoft.Server_Host.UI;
 
 public partial class MainWindow : MetroWindow
 {
-    private readonly TrayIcon trayIcon = new();
+    private readonly TrayIcon trayIcon;
 
     record Settings(string HostingPath, bool AutoStart, bool StartMinimized);
 
-    File settingsFile;
-    Settings settings;
+    Settings? settings;
 
     public MainWindow()
     {
         InitializeComponent();
-
 
         CloseAllFlyouts();
 
         ThemeManager.Current.ThemeSyncMode = ThemeSyncMode.SyncWithAppMode;
         ThemeManager.Current.ThemeChanged += (sender, e) => SetServerIconsByTheme(e.NewTheme);
         ThemeManager.Current.SyncTheme();
-        SetServerIconsByTheme(ThemeManager.Current.DetectTheme());
 
-        trayIcon.AttachToWindow(this);
+        trayIcon = new(this);
+        SetServerIconsByTheme(ThemeManager.Current.DetectTheme()!);
 
         _ = SyncLogToScreen();
     }
@@ -43,26 +41,9 @@ public partial class MainWindow : MetroWindow
     {
         base.OnInitialized(e);
 
+        await SyncSettings(firstLoad: true);
+
         DotNetVersion.Text = $"running on .NET {Environment.Version.Major}";
-
-        Log.Information("loading settings ...");
-        try
-        {
-            settingsFile = Directory.Common.User.Roaming / Assembly.GetExecutingAssembly().GetName().Name / Filename.From("Settings", "json");
-            settings = await settingsFile.ReadFromJson<Settings>();
-        }
-        catch
-        {
-            Log.Error("loading failed");
-        }
-
-        settings ??= new Settings("", false, false);
-
-        SettingsHostingPath.Text = settings.HostingPath;
-        SettingsAutoStart.IsOn = settings.AutoStart;
-        SettingsStartMinimized.IsOn = settings.StartMinimized;
-
-        await SaveSettings(loaded: true);
     }
 
     void SetServerIconsByTheme(Theme theme)
@@ -94,10 +75,16 @@ public partial class MainWindow : MetroWindow
 
         if (once)
         {
-            var context = Tag as App.HostingTag;
+            var context = (Tag as App.HostingTag)!;
             var hosting = context.Hosting;
             hosting.OnServicesChanged += Hosting_OnServicesChanged;
             hosting.TrackServicesChanges();
+
+            if (Environment.GetCommandLineArgs().Contains("minimized"))
+            {
+                WindowState = WindowState.Minimized;
+                OnStateChanged(EventArgs.Empty);
+            }
 
             once = false;
         }
@@ -127,7 +114,7 @@ public partial class MainWindow : MetroWindow
 
     private void Tile_Click(object sender, RoutedEventArgs e)
     {
-        var target = (sender as Control).Tag as string;
+        var target = (sender as Control)!.Tag as string;
         Process.Start(new ProcessStartInfo("https://" + target)
         {
             UseShellExecute = true,
@@ -158,46 +145,61 @@ public partial class MainWindow : MetroWindow
 
     private void Tile_OpenLogFiles_Click(object sender, RoutedEventArgs e) => CloseAllFlyouts(butToggleThisOne: LogFilesFlyout);
 
-    private void HostingPath_TextChanged(object sender, TextChangedEventArgs e) => _ = SaveSettings();
-    private void AutoStart_Toggled(object sender, RoutedEventArgs e) => _ = SaveSettings();
-    private void StartMinimized_Toggled(object sender, RoutedEventArgs e) => _ = SaveSettings();
+    private void HostingPath_TextChanged(object sender, TextChangedEventArgs e) => _ = SyncSettings();
+    private void AutoStart_Toggled(object sender, RoutedEventArgs e) => _ = SyncSettings();
+    private void StartMinimized_Toggled(object sender, RoutedEventArgs e) => _ = SyncSettings();
 
-    private static bool settingsLoaded;
-
-    private async Task SaveSettings(bool loaded = false)
+    private async Task SyncSettings(bool firstLoad = false)
     {
-        settingsLoaded = settingsLoaded || loaded;
+        var name = Assembly.GetExecutingAssembly().GetName().Name ?? "Server Host";
+        var settingsFile = Directory.Common.User.Roaming / name / Filename.From("Settings", "json");
 
-        if (settingsLoaded)
+        if (firstLoad == true)
         {
-            settings = new Settings(SettingsHostingPath.Text, SettingsAutoStart.IsOn, SettingsStartMinimized.IsOn);
-
-            ApplySettings(settings);
-
-            Log.Information("saving settings ...");
-
+            Log.Information("Load Settings");
+            // load into local variable so sync is still disabled
+            var _settings = default(Settings);
             try
             {
-                await settingsFile.WriteAsJson(settings, null);
+                _settings = await settingsFile.ReadFromJson<Settings>();
             }
             catch
             {
-                Log.Error("saving failed");
+                Log.Error("loading failed");
             }
-        }
-    }
 
-    private void ApplySettings(Settings settings)
-    {
+            _settings ??= new Settings("", false, false);
+
+            Log.Information($"settings: {settings}");
+
+            SettingsHostingPath.Text = _settings.HostingPath;
+            SettingsAutoStart.IsOn = _settings.AutoStart;
+            SettingsStartMinimized.IsOn = _settings.StartMinimized;
+
+            // activate sync
+            settings = _settings;
+        }
+
+        if (settings == null)
+        {
+            // happens before first load
+            return;
+        }
+
+        Log.Information("Sync Settings");
+        settings = new(
+            HostingPath: SettingsHostingPath.Text,
+            AutoStart: SettingsAutoStart.IsOn,
+            StartMinimized: SettingsStartMinimized.IsOn
+        );
+
         var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
-        var appName = Assembly.GetEntryAssembly().GetName().Name;
+        var appName = Assembly.GetEntryAssembly()?.GetName().Name ?? "Server Host";
         var appLocation = Environment.ProcessPath;
         if (settings.AutoStart)
         {
-            if (key.GetValue(appName) == null)
-            {
-                key.SetValue(appName, appLocation);
-            }
+            key.SetValue(appName, $"\"{appLocation}\" {(settings.StartMinimized ? "minimized" : "")}".TrimEnd());
+            Log.Information($"regedit: add {appName} = \"{appLocation}\" {(settings.StartMinimized ? "minimized" : "")}".TrimEnd());
         }
         else
         {
@@ -205,8 +207,19 @@ public partial class MainWindow : MetroWindow
             {
                 key.DeleteValue(appName);
             }
+            Log.Information($"regedit: remove {appName} = \"{appLocation}\" {(settings.StartMinimized ? "minimized" : "")}".TrimEnd());
         }
 
+        Log.Information("saving settings ...");
+
+        try
+        {
+            await settingsFile.WriteAsJson(settings);
+        }
+        catch
+        {
+            Log.Error("saving failed");
+        }
     }
 
     private async Task SyncLogToScreen()
@@ -217,7 +230,7 @@ public partial class MainWindow : MetroWindow
             {
                 try
                 {
-                    var scroller = LogOutput.Parent as ScrollViewer;
+                    var scroller = (LogOutput.Parent as ScrollViewer)!;
                     var text = (await Task.WhenAll(files.All.Where(f => f.Name == "log.txt").Select(f => ReadText(f)))).FirstOrDefault() ?? "<no log found>";
                     LogOutput.Text = text;
                     if (isAtEnd)
@@ -235,9 +248,9 @@ public partial class MainWindow : MetroWindow
 
     static bool isAtEnd = false;
 
-    private void ScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e) => isAtEnd = (sender as ScrollViewer).VerticalOffset == (sender as ScrollViewer).ScrollableHeight;
+    private void ScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e) => isAtEnd = (sender as ScrollViewer)!.VerticalOffset == (sender as ScrollViewer)!.ScrollableHeight;
 
-    public async Task<string> ReadText(File file)
+    public async Task<string?> ReadText(File file)
     {
         if (file.Exists)
         {
@@ -255,8 +268,8 @@ public partial class MainWindow : MetroWindow
 
     private void ContextMenu_Open_Click(object sender, RoutedEventArgs e)
     {
-        var contextMenu = (sender as MenuItem);
-        var site = contextMenu.Tag as Web.Hosting.Site;
+        var contextMenu = (sender as MenuItem)!;
+        var site = (contextMenu.Tag as Web.Hosting.Site)!;
         Process.Start(new ProcessStartInfo("https://" + site.FullDomain)
         {
             UseShellExecute = true,
@@ -265,9 +278,9 @@ public partial class MainWindow : MetroWindow
 
     private async void ContextMenu_Restart_Click(object sender, RoutedEventArgs e)
     {
-        var hosting = (Tag as App.HostingTag).Hosting;
-        var menuItem = (sender as MenuItem);
-        var site = menuItem.Tag as Web.Hosting.Site;
+        var hosting = (Tag as App.HostingTag)!.Hosting;
+        var menuItem = (sender as MenuItem)!;
+        var site = (menuItem.Tag as Web.Hosting.Site)!;
 
         menuItem.IsEnabled = false;
 
@@ -276,11 +289,11 @@ public partial class MainWindow : MetroWindow
         menuItem.IsEnabled = true;
     }
 
-    private void CloseAllFlyouts(Flyout butToggleThisOne = null)
+    private void CloseAllFlyouts(Flyout? butToggleThisOne = null)
     {
-        foreach (var flyout in Flyouts.FindChildren<Flyout>())
+        foreach (var flyout in MyFlyouts.FindChildren<Flyout>())
         {
-            flyout.IsOpen = flyout == butToggleThisOne ? !flyout.IsOpen : false;
+            flyout.IsOpen = flyout == butToggleThisOne && !flyout.IsOpen;
         }
     }
 }

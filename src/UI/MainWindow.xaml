@@ -179,7 +179,7 @@
             </Grid>
         </Grid>
 
-        <mah:FlyoutsControl x:Name="Flyouts">
+        <mah:FlyoutsControl x:Name="MyFlyouts">
             <mah:Flyout x:Name="SettingsFlyout" IsOpen="False" Position="Right" Width="620">
                 <StackPanel Margin="64 0">
                     <TextBlock Margin="16" FontSize="48">Settings</TextBlock>

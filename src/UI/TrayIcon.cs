@@ -11,31 +11,45 @@ namespace Conesoft.Server_Host.UI;
 
 public class TrayIcon
 {
-    NotifyIcon notifyIcon;
+    NotifyIcon? notifyIcon;
 
-    Window window;
+    readonly Window window;
     string theme;
-    Icon IconFromTheme => theme switch
+    Icon? IconFromTheme => theme switch
     {
         "Light" => new Icon("Icons/Server.Dark.ico"),
         "Dark" => new Icon("Icons/Server.Light.ico"),
         _ => null
     };
 
-    public void AttachToWindow(Window window)
+    public TrayIcon(Window window)
     {
         this.window = window;
-        window.Closing += (sender, e) => notifyIcon.Visible = false;
-        window.StateChanged += (sender, e) => notifyIcon.Visible = window.WindowState == WindowState.Minimized;
+        this.theme = "Dark";
+
+        window.Closing += (sender, e) =>
+        {
+            if(notifyIcon != null)
+            {
+                notifyIcon.Visible = false;
+            }
+        };
+        window.StateChanged += (sender, e) =>
+        {
+            if (notifyIcon != null)
+            {
+                notifyIcon.Visible = window.WindowState == WindowState.Minimized;
+            }
+        };
         SystemEvents.DisplaySettingsChanged += RefreshIcon;
         SystemEvents.PowerModeChanged += RefreshIcon;
         SystemEvents.SessionSwitch += RefreshIcon;
         SystemEvents.UserPreferenceChanged += RefreshIcon;
     }
 
-    private void RefreshIcon(object sender, EventArgs e)
+    private void RefreshIcon(object? sender, EventArgs e)
     {
-        if(notifyIcon != null)
+        if (notifyIcon != null)
         {
             notifyIcon.Icon = IconFromTheme;
         }
@@ -47,9 +61,13 @@ public class TrayIcon
         if (notifyIcon != null)
         {
             notifyIcon.Icon = IconFromTheme;
-            notifyIcon.ContextMenuStrip.BackColor = theme == "Dark" ? Color.Black : Color.White;
-            notifyIcon.ContextMenuStrip.ForeColor = theme == "Dark" ? Color.White : Color.Black;
-            notifyIcon.ContextMenuStrip.Renderer = new ToolStripProfessionalRenderer(theme == "Dark" ? new MyDarkColorTable() : new MyLightColorTable());
+
+            if (notifyIcon.ContextMenuStrip != null)
+            {
+                notifyIcon.ContextMenuStrip.BackColor = theme == "Dark" ? Color.Black : Color.White;
+                notifyIcon.ContextMenuStrip.ForeColor = theme == "Dark" ? Color.White : Color.Black;
+                notifyIcon.ContextMenuStrip.Renderer = new ToolStripProfessionalRenderer(theme == "Dark" ? new MyDarkColorTable() : new MyLightColorTable());
+            }
         }
     }
 

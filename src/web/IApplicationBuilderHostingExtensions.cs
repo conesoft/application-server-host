@@ -8,7 +8,7 @@ public static class IApplicationBuilderHostingExtensions
 {
     public static IApplicationBuilder UseHosting(this IApplicationBuilder app, IHttpForwarder forwarder)
     {
-        var hosting = app.ApplicationServices.GetService<Hosting>();
+        var hosting = app.ApplicationServices.GetRequiredService<Hosting>();
 
         app.UseRouting();
 

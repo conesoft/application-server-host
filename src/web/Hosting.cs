@@ -16,7 +16,7 @@ namespace Conesoft.Server_Host.Web;
 
 public class Hosting
 {
-    public record Service(File Deployment, Process Process)
+    public record Service(File Deployment, Process? Process)
     {
         public string Name => Deployment.NameWithoutExtension.ToLowerInvariant();
         public virtual Directory Hosting => Deployment.Parent.Parent.Parent / Live / Deployment.Parent.Name / Deployment.NameWithoutExtension;
@@ -24,7 +24,7 @@ public class Hosting
 
 
         public static string[] Types => new[] { "Services", "Websites" };
-        public static Service FromFile(File file) => file.Parent.Name switch
+        public static Service? FromFile(File file) => file.Parent.Name switch
         {
             "Websites" => new Site(file, null, null),
             "Services" => new Service(file, null),
@@ -35,7 +35,7 @@ public class Hosting
         public string ProcessIdDescription => Process != null ? $"pid = {Process.Id}" : "";
     }
 
-    public record Site(File Deployment, Process Process, int? Port) : Service(Deployment, Process)
+    public record Site(File Deployment, Process? Process, int? Port) : Service(Deployment, Process)
     {
         public string Domain => string.Join('.', Name.Split('.').TakeLast(2));
         public string Subdomain => Name.Split('.').SkipLast(2).FirstOrDefault() ?? MainDomainPart;
@@ -43,7 +43,7 @@ public class Hosting
         public string RelevantDomainPart => Subdomain.ToLowerInvariant() == MainDomainPart ? Domain : Subdomain;
         public override Directory Hosting => base.Hosting.Parent / Domain / Subdomain;
 
-        public Uri ProxyTo { get; set; }
+        public Uri? ProxyTo { get; set; }
 
         static string MainDomainPart => "main";
 
@@ -53,7 +53,7 @@ public class Hosting
     readonly Directory root;
     readonly Dictionary<File, Service> services = new();
 
-    public event Action<Service[]> OnServicesChanged;
+    public event Action<Service[]>? OnServicesChanged;
     public void TrackServicesChanges() => OnServicesChanged?.Invoke(services.Values.ToArray());
 
     static string Deployments => "Deployments";
@@ -61,7 +61,7 @@ public class Hosting
 
     public Hosting(IConfiguration configuration)
     {
-        root = Directory.From(configuration["hosting:root"]);
+        root = Directory.From(configuration["hosting:root"]!);
     }
 
     public async Task Begin()
@@ -71,16 +71,19 @@ public class Hosting
         {
             if (files.ThereAreChanges)
             {
-                Log.Information($"changes found in {string.Join(" & ", files.Added.Concat(files.Changed).Concat(files.Deleted).Select(f => f.Parent.Name).Where(n => Service.Types.Contains(n)).Distinct())}");
+                var added = files.Added ?? Array.Empty<File>();
+                var changed = files.Changed ?? Array.Empty<File>();
+                var deleted = files.Deleted ?? Array.Empty<File>();
+                Log.Information($"changes found in {string.Join(" & ", added.Concat(changed).Concat(deleted).Select(f => f.Parent.Name).Where(n => Service.Types.Contains(n)).Distinct())}");
 
-                foreach (var file in files.Added.Concat(files.Deleted).Concat(files.Changed).ToArray())
+                foreach (var file in added.Concat(deleted).Concat(changed).ToArray())
                 {
                     Log.Information("stopping {file}", file);
                     await StopDeploySite(file);
                     Log.Information("stopped {file}", file);
                     TrackServicesChanges();
                 }
-                foreach (var file in files.Added.Concat(files.Changed).ToArray())
+                foreach (var file in added.Concat(changed).ToArray())
                 {
                     Log.Information("starting {file}", file);
                     await StartDeploySite(file);
@@ -109,7 +112,7 @@ public class Hosting
             {
                 if (SiteByDomain(httpContext.Request.Host.Host) is Site site && (site.Port != null || site.ProxyTo != null))
                 {
-                    var uri = site.Port != null ? $"https://localhost:{site.Port}" : site.ProxyTo.ToString();
+                    var uri = site.Port != null ? $"https://localhost:{site.Port}" : site.ProxyTo!.ToString();
                     await forwarder.SendAsync(httpContext, uri, httpClient, requestOptions, transformer);
                 }
                 else
@@ -123,7 +126,7 @@ public class Hosting
         var _ = Begin();
     }
 
-    Site SiteByDomain(string domain) => services.Values.OfType<Site>().Where(p => p.FullDomain == domain.ToLowerInvariant()).FirstOrDefault();
+    Site? SiteByDomain(string domain) => services.Values.OfType<Site>().Where(p => p.FullDomain == domain.ToLowerInvariant()).FirstOrDefault() ?? null;
 
     async Task StartDeploySite(File file, bool waitForPort = false)
     {
@@ -142,19 +145,25 @@ public class Hosting
                     case ".zip":
                         service.Hosting.Parent.Create();
                         service.Deployment.AsZip().ExtractTo(service.Hosting);
-                        service = service with { Process = RunHosted(service.Hosting.Filtered("*.exe", allDirectories: false).FirstOrDefault()) };
-                        services[file] = service;
-
-                        var portTask = ScanForPort(file);
-                        if (waitForPort)
+                        if (service.Hosting.Filtered("*.exe", allDirectories: false).FirstOrDefault() is File executable)
                         {
-                            await portTask;
+                            service = service with { Process = RunHosted(executable) };
+                            services[file] = service;
+
+                            var portTask = ScanForPort(file);
+                            if (waitForPort)
+                            {
+                                await portTask;
+                            }
                         }
                         break;
 
                     case ".txt":
-                        var uri = new Uri(await file.ReadText(), UriKind.Absolute);
-                        services[file] = (service as Site) with { ProxyTo = uri };
+                        if((await file.ReadText()) is string url && service is Site site)
+                        {
+                            var uri = new Uri(url, UriKind.Absolute);
+                            services[file] = site with { ProxyTo = uri };
+                        }
                         break;
                 }
             }
@@ -163,11 +172,11 @@ public class Hosting
 
     async Task ScanForPort(File file)
     {
-        if (services[file] is Site site)
+        if (services[file] is Site site && site.Process is Process process)
         {
-            Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] scanning for Port on PID \"{site.Process.Id}\"");
-            Network_Connections.Connection connection = null;
-            for (; connection == null; connection = Network_Connections.Connection.Listening.From(site.Process))
+            Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] scanning for Port on PID \"{process.Id}\"");
+            Network_Connections.Connection? connection = null;
+            for (; connection == null; connection = Network_Connections.Connection.Listening.From(process))
             {
                 await Task.Delay(500);
             }
@@ -249,7 +258,7 @@ public class Hosting
         }
     }
 
-    static Process RunHosted(File file)
+    static Process? RunHosted(File file)
     {
         var start = new ProcessStartInfo(file.Path, $"--urls=https://127.0.0.1:0/")
         {

@@ -13,7 +13,7 @@ namespace Conesoft.Server_Host;
 public partial class App : Application
 {
     public record HostingTag(Web.Hosting Hosting);
-    private IHost host;
+    private IHost? host;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -23,7 +23,7 @@ public partial class App : Application
         this.Dispatcher.UnhandledException += Dispatcher_UnhandledException;
 
         var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-        var root = Directory.From(configuration["hosting:root"]);
+        var root = Directory.From(configuration["hosting:root"]!);
 
         var log = root / Filename.From("log", "txt");
         System.IO.File.WriteAllText(log.Path, "");
@@ -49,7 +49,7 @@ public partial class App : Application
 
         if (Environment.CurrentDirectory == Environment.SystemDirectory)
         {
-            var executableDirectory = File.From(Process.GetCurrentProcess().MainModule.FileName).Parent.Path;
+            var executableDirectory = File.From(Environment.ProcessPath!).Parent.Path;
             Environment.CurrentDirectory = executableDirectory;
             Log.Information("Remapping 'Current Directory' from '{old}' to '{new}'", Environment.CurrentDirectory, executableDirectory);
         }
@@ -87,6 +87,6 @@ public partial class App : Application
     protected override void OnActivated(EventArgs e)
     {
         base.OnActivated(e);
-        MainWindow.Tag = new HostingTag(host.Services.GetService(typeof(Web.Hosting)) as Web.Hosting);
+        MainWindow.Tag = new HostingTag((host!.Services.GetService(typeof(Web.Hosting)) as Web.Hosting)!);
     }
 }
