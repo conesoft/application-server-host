@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net7.0-windows</TargetFramework>
+		<TargetFramework>net8.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
 		<Nullable>enable</Nullable>
@@ -18,11 +18,12 @@
 		<PackageReference Include="Conesoft.DNSimple" Version="1.1.0" />
 		<PackageReference Include="Conesoft.Files" Version="1.8.2" />
 		<PackageReference Include="Conesoft.Ipify" Version="1.0.6" />
-		<PackageReference Include="Conesoft.Network-Connections" Version="1.1.0" />
+		<PackageReference Include="Conesoft.Network-Connections" Version="2.0.0" />
 		<PackageReference Include="MahApps.Metro" Version="2.4.10" />
 		<PackageReference Include="Meziantou.WpfFontAwesome" Version="5.15.4" />
 		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-		<PackageReference Include="Yarp.ReverseProxy" Version="2.0.1" />
+		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
+		<PackageReference Include="Yarp.ReverseProxy" Version="2.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>

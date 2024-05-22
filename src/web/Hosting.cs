@@ -1,4 +1,5 @@
 ﻿using Conesoft.Files;
+using Conesoft.Network_Connections;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -9,8 +10,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Yarp.ReverseProxy.Forwarder;
+using System.Collections.Generic;
 
 namespace Conesoft.Server_Host.Web;
 
@@ -159,7 +162,7 @@ public class Hosting
                         break;
 
                     case ".txt":
-                        if((await file.ReadText()) is string url && service is Site site)
+                        if ((await file.ReadText()) is string url && service is Site site)
                         {
                             var uri = new Uri(url, UriKind.Absolute);
                             services[file] = site with { ProxyTo = uri };
@@ -170,22 +173,40 @@ public class Hosting
         });
     }
 
+    static Task<bool> IsHttpsPort(ushort port, CancellationToken ct) => new HttpClient().SendAsync(new HttpRequestMessage(HttpMethod.Head, $"https://localhost:{port}/"), ct).ContinueWith(t => t.IsCompletedSuccessfully);
+
+    static async Task<Connection?> FindHttpsPortOnProcess(Process process, CancellationToken ct = default)
+    {
+        while (ct.IsCancellationRequested == false)
+        {
+            var connections = process.GetListeningPorts();
+            var connection = await connections.ToAsyncEnumerable().FirstOrDefaultAwaitAsync(async c => await IsHttpsPort(c.Local.Port, ct), ct);
+            if (connection != null)
+            {
+                return connection;
+            }
+            await Task.Delay(200, ct);
+        }
+        return null;
+    }
+
     async Task ScanForPort(File file)
     {
         if (services[file] is Site site && site.Process is Process process)
         {
             Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] scanning for Port on PID \"{process.Id}\"");
-            Network_Connections.Connection? connection = null;
-            for (; connection == null; connection = Network_Connections.Connection.Listening.From(process))
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var connection = await FindHttpsPortOnProcess(process, cts.Token);
+            if (connection != null)
             {
-                await Task.Delay(500);
+                var port = connection.Local.Port;
+                Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] found Port \"{port}\"");
+                services[file] = site with { Port = port };
+
+                TrackServicesChanges();
+
+                await new HttpClient().SendAsync(new HttpRequestMessage(HttpMethod.Head, $"https://{site.FullDomain}/"));
             }
-            Log.Information($"[{file.Parent.Name.ToUpperInvariant()}] found Port \"{connection.Local.Port}\"");
-            services[file] = site with { Port = connection.Local.Port };
-
-            TrackServicesChanges();
-
-            await new HttpClient().SendAsync(new HttpRequestMessage(HttpMethod.Head, $"https://{site.FullDomain}/"));
         }
     }
 
