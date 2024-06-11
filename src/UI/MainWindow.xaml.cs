@@ -48,8 +48,6 @@ public partial class MainWindow : MetroWindow
 
     void SetServerIconsByTheme(Theme theme)
     {
-        var iconPath = Directory.From(Environment.CurrentDirectory) / "Icons";
-
         trayIcon.UpdateTheme(theme.BaseColorScheme);
 
         Icon = theme.BaseColorScheme switch
@@ -224,14 +222,15 @@ public partial class MainWindow : MetroWindow
 
     private async Task SyncLogToScreen()
     {
-        await foreach (var files in Directory.From(@"D:\Hosting").Live().Changes())
+        await foreach (var entries in Directory.From(@"D:\Hosting").Live().Changes())
         {
-            if (files.ThereAreChanges)
+            if (entries.ThereAreChanges)
             {
+                var files = entries.All.Files();
                 try
                 {
                     var scroller = (LogOutput.Parent as ScrollViewer)!;
-                    var text = (await Task.WhenAll(files.All.Where(f => f.Name == "log.txt").Select(f => ReadText(f)))).FirstOrDefault() ?? "<no log found>";
+                    var text = (await Task.WhenAll(files.Where(f => f.Name == "log.txt").Select(ReadText))).FirstOrDefault() ?? "<no log found>";
                     LogOutput.Text = text;
                     if (isAtEnd)
                     {

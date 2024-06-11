@@ -1,7 +1,9 @@
 ﻿using Conesoft.Files;
 using Conesoft.Network_Connections;
+using Humanizer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using System;
@@ -13,11 +15,10 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Yarp.ReverseProxy.Forwarder;
-using System.Collections.Generic;
 
 namespace Conesoft.Server_Host.Web;
 
-public class Hosting
+public class Hosting(IConfiguration configuration)
 {
     public record Service(File Deployment, Process? Process)
     {
@@ -26,7 +27,7 @@ public class Hosting
 
 
 
-        public static string[] Types => new[] { "Services", "Websites" };
+        public static string[] Types => ["Services", "Websites"];
         public static Service? FromFile(File file) => file.Parent.Name switch
         {
             "Websites" => new Site(file, null, null),
@@ -53,30 +54,25 @@ public class Hosting
         public string PortDescription => Port.HasValue ? $":{Port.Value}" : "";
     }
 
-    readonly Directory root;
-    readonly Dictionary<File, Service> services = new();
+    readonly Directory root = Directory.From(configuration["hosting:root"]!);
+    readonly Dictionary<File, Service> services = [];
 
     public event Action<Service[]>? OnServicesChanged;
-    public void TrackServicesChanges() => OnServicesChanged?.Invoke(services.Values.ToArray());
+    public void TrackServicesChanges() => OnServicesChanged?.Invoke([.. services.Values]);
 
     static string Deployments => "Deployments";
     static string Live => "Live";
 
-    public Hosting(IConfiguration configuration)
-    {
-        root = Directory.From(configuration["hosting:root"]!);
-    }
-
     public async Task Begin()
     {
         Log.Information("watching folder {folder}", root / Deployments);
-        await foreach (var files in (root / Deployments).Live(allDirectories: true).Changes())
+        await foreach (var entries in (root / Deployments).Live(allDirectories: true).Changes())
         {
-            if (files.ThereAreChanges)
+            if (entries.ThereAreChanges)
             {
-                var added = files.Added ?? Array.Empty<File>();
-                var changed = files.Changed ?? Array.Empty<File>();
-                var deleted = files.Deleted ?? Array.Empty<File>();
+                var added = entries.Added?.Files() ?? [];
+                var changed = entries.Changed?.Files() ?? [];
+                var deleted = entries.Deleted?.Files() ?? [];
                 Log.Information($"changes found in {string.Join(" & ", added.Concat(changed).Concat(deleted).Select(f => f.Parent.Name).Where(n => Service.Types.Contains(n)).Distinct())}");
 
                 foreach (var file in added.Concat(deleted).Concat(changed).ToArray())
@@ -101,13 +97,24 @@ public class Hosting
         var transformer = new CustomTransformer(); // or HttpTransformer.Default;
         var requestOptions = new ForwarderRequestConfig { AllowResponseBuffering = false, ActivityTimeout = TimeSpan.FromSeconds(100) };
 
-        var httpClient = new HttpMessageInvoker(new SocketsHttpHandler()
+        var socketHttpHandler = new SocketsHttpHandler()
         {
             UseProxy = false,
             AllowAutoRedirect = false,
             AutomaticDecompression = DecompressionMethods.None,
-            UseCookies = false
-        }, disposeHandler: true);
+            UseCookies = false,
+
+            PooledConnectionIdleTimeout = TimeSpan.MaxValue, //<<< potentially fixes the 2s delays
+            ///PooledConnectionLifetime = TimeSpan.MaxValue,
+            //ConnectTimeout = TimeSpan.Zero,
+            Expect100ContinueTimeout = TimeSpan.Zero,
+            //KeepAlivePingTimeout = TimeSpan.Zero,
+            ///ResponseDrainTimeout = TimeSpan.Zero,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(1)
+        };
+        var httpClient = new HttpMessageInvoker(socketHttpHandler, disposeHandler: true);
+
+        var timer = new Stopwatch();
 
         app.UseEndpoints(endpoints =>
         {
@@ -116,12 +123,16 @@ public class Hosting
                 if (SiteByDomain(httpContext.Request.Host.Host) is Site site && (site.Port != null || site.ProxyTo != null))
                 {
                     var uri = site.Port != null ? $"https://localhost:{site.Port}" : site.ProxyTo!.ToString();
-                    await forwarder.SendAsync(httpContext, uri, httpClient, requestOptions, transformer);
+                    
+                    timer.Restart();
+                    var error = await forwarder.SendAsync(httpContext, uri, httpClient, requestOptions, transformer);
+                    Log.Information($"request to {httpContext.Request.GetDisplayUrl()} by {httpContext.Connection.RemoteIpAddress} resolved in {timer.Elapsed.Humanize(precision: 2)} with error {error}");
+                    timer.Stop();
                 }
                 else
                 {
                     httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-                    await httpContext.Response.WriteAsync($$"""<html><head><meta http-equiv="refresh" content="1"><style>html{color-scheme:dark;font:2rem monospace;display:grid;height:100%;place-content:center}</style></head><body>404 not found '{{httpContext.Request.Host.Host}}'</body></html>""");
+                    await httpContext.Response.WriteAsync($$"""<html><head><meta http-equiv="refresh" content="1"><style>html{background:black;color-scheme:dark;font:2rem monospace;display:grid;height:100%;place-content:center}a{color:mediumspringgreen}</style></head><body>404 not found <a href='https://{{httpContext.Request.Host.Host}}'>{{httpContext.Request.Host.Host}}</a></body></html>""");
                 }
             });
         });
@@ -148,7 +159,7 @@ public class Hosting
                     case ".zip":
                         service.Hosting.Parent.Create();
                         service.Deployment.AsZip().ExtractTo(service.Hosting);
-                        if (service.Hosting.Filtered("*.exe", allDirectories: false).FirstOrDefault() is File executable)
+                        if (service.Hosting.FilteredFiles("*.exe", allDirectories: false).FirstOrDefault() is File executable)
                         {
                             service = service with { Process = RunHosted(executable) };
                             services[file] = service;
@@ -205,7 +216,9 @@ public class Hosting
 
                 TrackServicesChanges();
 
-                await new HttpClient().SendAsync(new HttpRequestMessage(HttpMethod.Head, $"https://{site.FullDomain}/"));
+                // head is not enough to get site warmed up, need to read response
+                var response = await new HttpClient().GetAsync($"https://{site.FullDomain}/");
+                await response.Content.ReadAsStringAsync();
             }
         }
     }
@@ -216,12 +229,7 @@ public class Hosting
 
         if (services.FirstOrDefault(s => s.Value == site) is { Key: not null } entry)
         {
-            var file = entry.Key;
-
-            if (file == null)
-            {
-                throw new Exception();
-            }
+            var file = entry.Key ?? throw new Exception();
 
             Log.Information("stopping {file}", file);
             await StopDeploySite(file);

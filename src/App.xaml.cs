@@ -1,7 +1,10 @@
 ﻿using Conesoft.Files;
+using Conesoft.Hosting;
+using Conesoft.Server_Host.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Serilog.Formatting.Compact;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -14,6 +17,7 @@ public partial class App : Application
 {
     public record HostingTag(Web.Hosting Hosting);
     private IHost? host;
+    private LoggingExtensions.HostedLoggingExtensionWrapper? wrapper;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -24,21 +28,17 @@ public partial class App : Application
 
         var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
         var root = Directory.From(configuration["hosting:root"]!);
+        var log = root / "Logs" / Filename.From("Application - Host - ", "txt");
 
-        var log = root / Filename.From("log", "txt");
-        System.IO.File.WriteAllText(log.Path, "");
+        wrapper = LoggingExtensions.AddLogging(log.Path, "Conesoft Host");
+        wrapper.Start();
 
-        Log.Logger = new LoggerConfiguration()
-            .WriteTo.File(log.Path, buffered: false, flushToDiskInterval: TimeSpan.FromMilliseconds(1))
-            .CreateLogger();
-
-        Log.Information("App has started");
-        Log.Information("App Current Directory: {dir}", Environment.CurrentDirectory);
+        Log.Information("app current directory: {dir}", Environment.CurrentDirectory);
 
         //// DIE, ALREADY OPEN APPS, DIE!!!
         var currentProcess = Process.GetCurrentProcess();
         var processesToKill = Process.GetProcessesByName(currentProcess.ProcessName).Where(p => p.Id != currentProcess.Id).ToList();
-        if (processesToKill.Any())
+        if (processesToKill.Count != 0)
         {
             foreach (var p in processesToKill)
             {
@@ -54,6 +54,8 @@ public partial class App : Application
             Log.Information("Remapping 'Current Directory' from '{old}' to '{new}'", Environment.CurrentDirectory, executableDirectory);
         }
 
+        Log.Information("Starting periodic garbage collection");
+        var _ = GarbageCollect.Every(TimeSpan.FromMinutes(5));
 
         Log.Information("Starting web service");
         try

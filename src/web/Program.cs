@@ -21,7 +21,7 @@ public class Program
         return host;
     }
 
-    private static Dictionary<string, X509Certificate2> certificates = new();
+    private static Dictionary<string, X509Certificate2> certificates = [];
 
     static IHostBuilder CreateHostBuilder(string[] args) =>
     Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
@@ -50,17 +50,17 @@ public class Program
             configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").AddJsonFile((root / "Settings" / Filename.From("hosting", "json")).Path).Build();
             var password = configuration["hosting:certificate-password"];
 
-            var certificatesPath = root / "Storage" / "Websites" / "Certificates";
+            var certificatesPath = root / "Storage" / "Certificates";
             _ = Task.Run(async () =>
             {
-                await foreach (var files in certificatesPath.Live().Changes())
+                await foreach (var entries in certificatesPath.Live().Changes())
                 {
-                    if (files.ThereAreChanges)
+                    if (entries.ThereAreChanges)
                     {
                         Log.Information("loading certificates");
                         try
                         {
-                            certificates = files.All.ToDictionary(c => c.NameWithoutExtension, c => new X509Certificate2(c.Path, password));
+                            certificates = entries.All.Files().ToDictionary(c => c.NameWithoutExtension, c => new X509Certificate2(c.Path, password));
                         }
                         catch (Exception)
                         {

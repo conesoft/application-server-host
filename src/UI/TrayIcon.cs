@@ -1,5 +1,4 @@
-﻿using Conesoft.Server_Host.Web;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -71,7 +70,7 @@ public class TrayIcon
         }
     }
 
-    public void UpdateContextMenu(IOrderedEnumerable<IGrouping<string, Hosting.Site>> sorted)
+    public void UpdateContextMenu(IOrderedEnumerable<IGrouping<string, Web.Hosting.Site>> sorted)
     {
         if (notifyIcon == null)
         {
