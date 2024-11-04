@@ -24,7 +24,7 @@ builder.AddDesktopApplication();
 builder.AddMediator();
 
 builder.UseCertificateSelector<CertificateSelector>();
-builder.AddProxyTargetSelection<SelectDemoTarget>();
+builder.AddProxyTargetSelection<SelectActiveTarget>();
 builder.AddActiveProcesses();
 builder.AddActivePorts();
 builder.AddDeploymentWatcher();
