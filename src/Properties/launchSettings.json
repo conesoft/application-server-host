@@ -1,13 +1,12 @@
 {
   "profiles": {
-    "Conesoft.Host": {
+    "Server Host": {
       "commandName": "Project",
-      "dotnetRunMessages": "true",
-      "launchBrowser": false,
-      "applicationUrl": "https://localhost:443/;http://localhost:80/",
+      "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "applicationUrl": "https://localhost:49575;http://localhost:49576"
     }
   }
 }
