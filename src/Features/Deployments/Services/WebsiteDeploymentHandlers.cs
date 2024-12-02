@@ -3,17 +3,17 @@ using Conesoft.Server_Host.Features.ActivePorts.Interfaces;
 using Conesoft.Server_Host.Features.ActiveProcesses.Interfaces;
 using Conesoft.Server_Host.Features.Deployments.Messages;
 using Conesoft.Server_Host.Features.HostEnvironment;
-using Conesoft.Server_Host.Features.Mediator.Interfaces;
+using Conesoft.Server_Host.Features.MediatorService.Interfaces;
 using Serilog;
 using System.Diagnostics;
 
 namespace Conesoft.Server_Host.Features.Deployments.Services;
 
 class WebsiteDeploymentHandler(HostEnvironmentInfo info, IControlActiveProcesses activeProcesses, IControlActivePorts activePorts) :
-    IHandler<StartDeployment>,
-    IHandler<StopDeployment>
+    IListener<StartDeployment>,
+    IListener<StopDeployment>
 {
-    void IHandler<StartDeployment>.Handle(StartDeployment message)
+    void IListener<StartDeployment>.Listen(StartDeployment message)
     {
         Log.Information("Starting Website Deployment for {message}", message.Source.NameWithoutExtension);
         var target = info.Root / "Live";
@@ -33,7 +33,7 @@ class WebsiteDeploymentHandler(HostEnvironmentInfo info, IControlActiveProcesses
         }
     }
 
-    void IHandler<StopDeployment>.Handle(StopDeployment message)
+    void IListener<StopDeployment>.Listen(StopDeployment message)
     {
         Log.Information("Stopping Website Deployment for {message}", message.Source.NameWithoutExtension);
         activePorts.RemovePort(message.Source.NameWithoutExtension);

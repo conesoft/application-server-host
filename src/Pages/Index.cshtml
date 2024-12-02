@@ -1,0 +1,63 @@
+﻿@page
+@using Conesoft.Server_Host.Features.WebApplication.Services
+@model Conesoft.Server_Host.Pages.IndexModel
+@inject WebApplicationService webApplicationService
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <link href="/app.css" rel="stylesheet" />
+    <link rel="manifest" href="/pwa/site.webmanifest" />
+    <link rel="icon" type="image/svg" href="/conesoft-hosting.svg">
+</head>
+<body>
+    <h1>Conesoft Host</h1>
+    <section style="--accent-color: var(--accent)">
+        <header>Websites</header>
+        <ul>
+            @foreach (var website in webApplicationService.Host.Websites)
+            {
+                <li style="@($"view-transition-name: process-{website.Process}")">
+                    <label>@website.Name</label>
+                    <aside>
+                        <p>@website.Description</p>
+                        <p><span>pid = </span>@website.Process</p>
+                        <p><span>port = </span>@website.Port</p>
+                    </aside>
+                    <img src="icons/webservice.svg" />
+                </li>
+            }
+        </ul>
+    </section>
+
+    <section style="--accent-color: var(--accent2)">
+        <header>Services</header>
+        <ul>
+            @foreach (var service in webApplicationService.Host.Services)
+            {
+                <li style="@($"view-transition-name: process-{service.Process}")">
+                    <label>@service.Name</label>
+                    <aside>
+                        <p>@service.Description</p>
+                        <p><span>pid = </span>@service.Process</p>
+                    </aside>
+                    <img src="icons/service.svg" />
+                </li>
+            }
+        </ul>
+    </section>
+
+    <script>
+        async function wait() {
+            await fetch('/statechange')
+            let text = await (await fetch('/')).text()
+            document.startViewTransition(() => {
+                document.write(text)
+                document.close()
+            })
+        }
+        wait()
+    </script>
+</body>
+</html>

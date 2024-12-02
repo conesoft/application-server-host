@@ -28,7 +28,7 @@ class CertificateSelector(HostEnvironmentInfo info, IOptions<HostingOptions> opt
 
         await foreach (var _ in root.Live(cancellation: stoppingToken))
         {
-            certificates = root.Files.ToDictionary(c => c.NameWithoutExtension, c => new X509Certificate2(c.Path, password));
+            certificates = root.Files.ToDictionary(c => c.NameWithoutExtension, c => X509CertificateLoader.LoadPkcs12FromFile(c.Path, password));
             Log.Information("Active Certificates: {certificates}", certificates.Keys);
         }
     }

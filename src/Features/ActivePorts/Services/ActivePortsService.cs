@@ -2,13 +2,13 @@
 using Conesoft.Server_Host.Features.ActivePorts.Interfaces;
 using Conesoft.Server_Host.Features.ActivePorts.Messages;
 using Conesoft.Server_Host.Features.ActiveProcesses.Services;
-using Conesoft.Server_Host.Features.Mediator.Services;
+using Conesoft.Server_Host.Features.MediatorService.Services;
 using System.Diagnostics;
 using System.Net.Http;
 
 namespace Conesoft.Server_Host.Features.ActivePorts.Services;
 
-public class ActivePortsService(MediatorService mediator, ActiveProcessesService processes) : IControlActivePorts
+public class ActivePortsService(Mediator mediator, ActiveProcessesService processes) : IControlActivePorts
 {
     readonly Dictionary<string, ushort> ports = [];
 
@@ -30,7 +30,6 @@ public class ActivePortsService(MediatorService mediator, ActiveProcessesService
     {
         ports.Remove(name);
     }
-
 
     static Task<bool> IsHttpsPort(ushort port, CancellationToken ct) => new HttpClient().SendAsync(new HttpRequestMessage(HttpMethod.Head, $"https://localhost:{port}/"), ct).ContinueWith(t => t.IsCompletedSuccessfully);
 

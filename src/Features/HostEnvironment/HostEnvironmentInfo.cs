@@ -43,7 +43,5 @@ class HostEnvironmentInfo
             System.IO.Path.TrimEndingDirectorySeparator(Root.Path) + System.IO.Path.DirectorySeparatorChar,
             StringComparison.OrdinalIgnoreCase
         );
-
-        Root = IsInHostedEnvironment == false ? Root / "Test Environment" : Root;
     }
 }

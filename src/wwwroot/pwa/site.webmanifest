@@ -1,0 +1,29 @@
+{
+  "name": "Server Host by Conesoft",
+  "short_name": "Server Host",
+  "description": "simple server host for my homeserver",
+  "id": "https://localhost:49575",
+  "orientation": "any",
+  "lang": "en",
+  "dir": "auto",
+  "categories": [
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/pwa/conesoft-hosting.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "start_url": "https://localhost:49575",
+  "display": "standalone",
+  "display_override": [ "window-controls-overlay" ],
+  "launch_handler": {
+    "client_mode": [ "navigate-existing", "auto" ]
+  },
+  "handle_links": "not-preferred"
+}

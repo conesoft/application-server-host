@@ -1,14 +1,15 @@
 ﻿using Conesoft.Server_Host.Features.ActiveProcesses.Helpers;
 using Conesoft.Server_Host.Features.ActiveProcesses.Interfaces;
 using Conesoft.Server_Host.Features.ActiveProcesses.Messages;
-using Conesoft.Server_Host.Features.Mediator.Services;
+using Conesoft.Server_Host.Features.MediatorService.Services;
 using System.Diagnostics;
 
 namespace Conesoft.Server_Host.Features.ActiveProcesses.Services;
 
-public class ActiveProcessesService(MediatorService mediator) : IControlActiveProcesses
+public class ActiveProcessesService(Mediator mediator) : IControlActiveProcesses
 {
     readonly Dictionary<string, Process> services = [];
+    readonly ProcessTracker tracker = new();
 
     public IReadOnlyDictionary<string, Process> Services => services;
 
@@ -28,7 +29,7 @@ public class ActiveProcessesService(MediatorService mediator) : IControlActivePr
     {
         (this as IControlActiveProcesses).Kill(name);
         mediator.Notify(new OnNewProcessGettingLaunched(name));
-        if(ChildProcessTracker.Track(Process.Start(startInfo)) is Process process)
+        if(tracker.Track(Process.Start(startInfo)) is Process process)
         {
             services[name] = process;
             mediator.Notify(new OnNewProcessLaunched(name, process));
