@@ -10,7 +10,7 @@ class HostEnvironmentInfo
     public enum HostingType { Application, Service, Website }
 
     public string Name { get; private init; }
-    public HostingType Type { get; private set; }
+    public HostingType Type { get; private init; }
     public Directory Root { get; private init; }
     public bool IsInHostedEnvironment { get; private init; }
 
