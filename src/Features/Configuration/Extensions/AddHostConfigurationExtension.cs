@@ -1,5 +1,9 @@
 ﻿using Conesoft.Files;
 using Conesoft.Server_Host.Features.Configuration.Options;
+using System.Reflection;
+using System.Xml.Linq;
+using System.Xml.XPath;
+using IO = System.IO;
 
 namespace Conesoft.Server_Host.Features.Configuration.Extensions;
 
@@ -10,27 +14,44 @@ static class AddHostEnvironmentInfoExtension
         builder.Configuration.AddHostConfigurationToConfiguration(developmentMode: builder.Environment.IsDevelopment());
 
         builder.Services.ConfigureOptionsSection<HostingOptions>(section: "hosting");
-        builder.Services.ConfigureOptionsSection<DeploymentOptions>(section: "PropertyGroup");
 
         return builder;
     }
 
-    private static IConfigurationBuilder AddHostConfigurationToConfiguration(this ConfigurationManager configuration, bool developmentMode)
+    public static WebApplicationBuilder AddHostConfigurationFiles<OptionsType>(this WebApplicationBuilder builder, string section) where OptionsType : class
+    {
+        builder.AddHostConfigurationFiles();
+
+        builder.Services.ConfigureOptionsSection<OptionsType>(section);
+
+        return builder;
+    }
+
+    private static ConfigurationManager AddHostConfigurationToConfiguration(this ConfigurationManager configuration, bool developmentMode)
     {
         if (configuration["hosting:root"] is string root)
         {
+            var appName = Directory.Common.Current.FilteredFiles("Deploy.pubxml", allDirectories: true).FirstOrDefault() switch
+            {
+                File file => XDocument.Load(file.Path).XPathSelectElement("//Name|//Domain")?.Value,
+                _ => IO.Path.GetFileName(IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))!
+            };
+            configuration.AddInMemoryCollection([new("hosting:appname", appName)]);
+
+            configuration.AddJsonFile(IO.Path.Combine(root, "Settings", "settings.json"));
             if (developmentMode == false)
             {
-                configuration.AddJsonFile(System.IO.Path.Combine(root, "Settings", "hosting.json"));
+                configuration.AddJsonFile(IO.Path.Combine(root, "Settings", "hosting.json"));
             }
-            configuration.AddJsonFile(System.IO.Path.Combine(root, "Settings", "settings.json"));
 
-            // TODO: Add root/settings/{live deployment directory name}/settings, make it reloadable/changeable. https://github.com/conesoft/application-server-host/issues/9
+            var privateSettingsPath = IO.Path.Combine(root, "Settings", appName + ".json");
+            configuration.AddJsonFile(privateSettingsPath, optional: true, reloadOnChange: true);
+
+            return configuration;
         }
-        if (Directory.Common.Current.FilteredFiles("Deploy.pubxml", allDirectories: true).FirstOrDefault() is File file)
+        else
         {
-            configuration.AddXmlFile(file.Path);
+            throw new Exception("missing configuration for hosting:root in appsettings.json");
         }
-        return configuration;
     }
 }

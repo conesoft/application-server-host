@@ -7,4 +7,7 @@ class HostingOptions()
 
     [ConfigurationKeyName("certificate-password")]
     public string CertificatePassword { get; init; } = "";
+
+    [ConfigurationKeyName("appname")]
+    public string AppName { get; init; } = "";
 }

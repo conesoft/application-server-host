@@ -1,5 +1,5 @@
 ﻿using Conesoft.Files;
-using Conesoft.Server_Host.Features.HostEnvironment;
+using Conesoft.Server_Host.Features.HostEnvironmentInfo;
 using Serilog;
 using Serilog.Formatting.Compact;
 
@@ -7,18 +7,15 @@ namespace Conesoft.Server_Host.Features.Logging.Services;
 
 class LoggingService : IHostedService
 {
-    private readonly HostEnvironmentInfo environment;
+    private readonly HostEnvironment environment;
 
-    public LoggingService(HostEnvironmentInfo environment)
+    public LoggingService(HostEnvironment environment)
     {
         this.environment = environment;
-        if (environment.Environment.IsInHostedEnvironment)
+        if (environment.IsInHostedEnvironment)
         {
-            // TODO: Improve paths :D
-            var path = environment.Global.Storage.Parent / "Logs" / $"{environment.Environment.Type} - {environment.Environment.Name}";
-
-            var txt = path / "as Text" / Filename.From(environment.Environment.Name + " - ", "txt");
-            var log = path / Filename.From(environment.Environment.Name + " - ", "log");
+            var txt = environment.Root / "Logs" / "as Text" / Filename.From($"{environment.ApplicationName} - ", "txt");
+            var log = environment.Root / "Logs" / Filename.From($"{environment.ApplicationName} - ", "log");
 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
@@ -60,13 +57,13 @@ class LoggingService : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        Log.Information($"app '{environment.Environment.Name}' started");
+        Log.Information($"app '{environment.ApplicationName}' started");
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        Log.Information($"app '{environment.Environment.Name}' stopped");
+        Log.Information($"app '{environment.ApplicationName}' stopped");
         return Task.CompletedTask;
     }
 }

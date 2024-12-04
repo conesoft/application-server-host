@@ -1,14 +1,13 @@
 ﻿using Conesoft.Files;
 using Conesoft.Server_Host.Features.ActiveProcesses.Services;
 using Conesoft.Server_Host.Features.Deployments.Messages;
-using Conesoft.Server_Host.Features.HostEnvironment;
 using Conesoft.Server_Host.Features.MediatorService.Interfaces;
 using Serilog;
 using System.Diagnostics;
 
 namespace Conesoft.Server_Host.Features.Deployments.Services;
 
-class HostDeploymentHandler(HostEnvironmentInfo environment, ActiveProcessesService activeProcesses, IHostApplicationLifetime app) :
+class HostDeploymentHandler(HostEnvironmentInfo.HostEnvironment environment, ActiveProcessesService activeProcesses, IHostApplicationLifetime app) :
     IListener<StartDeployment>,
     IListener<StopDeployment>
 {

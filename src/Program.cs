@@ -5,7 +5,7 @@ using Conesoft.Server_Host.Features.Certificates.Extensions;
 using Conesoft.Server_Host.Features.Configuration.Extensions;
 using Conesoft.Server_Host.Features.Deployments.Extensions;
 using Conesoft.Server_Host.Features.GarbageCollection.Extensions;
-using Conesoft.Server_Host.Features.HostEnvironment.Extensions;
+using Conesoft.Server_Host.Features.HostEnvironmentInfo.Extensions;
 using Conesoft.Server_Host.Features.Logging.Extensions;
 using Conesoft.Server_Host.Features.MediatorService.Extensions;
 using Conesoft.Server_Host.Features.ProxyTarget;
