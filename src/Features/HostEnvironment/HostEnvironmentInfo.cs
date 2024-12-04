@@ -48,12 +48,12 @@ class HostEnvironmentInfo
 
         this.Environment = new(name, type, root, isInHostedEnvironment);
 
-        Global = new(Deployment: root / "Deployment", Live: root / "Live", Settings: root / "Settings", Storage: root / "Storage");
+        Global = new(Deployment: root / "Deployment", Live: root / "Live", Storage: root / "Storage");
 
         // TODO: Implment Local
         Local = default!;
     }
 
     public record Environment(string Name, HostingType Type, Directory Root, bool IsInHostedEnvironment);
-    public record Directories(Directory Deployment, Directory Live, Directory Settings, Directory Storage);
+    public record Directories(Directory Deployment, Directory Live, Directory Storage);
 }
