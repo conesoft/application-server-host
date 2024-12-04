@@ -9,10 +9,10 @@ class HostEnvironmentInfo
 {
     public enum HostingType { Application, Service, Website }
 
-    public string Name { get; private init; }
-    public HostingType Type { get; private set; }
-    public Directory Root { get; private init; }
-    public bool IsInHostedEnvironment { get; private init; }
+    public Environment Environment { get; private init; }
+
+    public Directories Global { get; private init; }
+    public Directories Local { get; private init; }
 
     public HostEnvironmentInfo(IOptions<HostingOptions> hostingOptions, IOptions<DeploymentOptions> deploymentOptions)
     {
@@ -25,25 +25,30 @@ class HostEnvironmentInfo
             throw new ApplicationException("Application Name Configuration not found");
         }
 
-        Name = Assembly.GetExecutingAssembly().GetName().Name!;
+        var name = Assembly.GetExecutingAssembly().GetName().Name!;
 
-        Root =
+        var root =
             hostingOptions.Value.Root != "" ?
             Directory.From(hostingOptions.Value.Root) :
             Directory.From(deploymentOptions.Value.Hosting).Parent.Parent
             ;
 
-        Type =
+        var type =
             deploymentOptions.Value.Hosting != "" ?
             deploymentOptions.Value.Domain != "" ? HostingType.Website : HostingType.Service :
             HostingType.Application
             ;
 
-        IsInHostedEnvironment = Assembly.GetExecutingAssembly().Location.StartsWith(
+        var isInHostedEnvironment = Assembly.GetExecutingAssembly().Location.StartsWith(
             System.IO.Path.TrimEndingDirectorySeparator(Root.Path) + System.IO.Path.DirectorySeparatorChar,
             StringComparison.OrdinalIgnoreCase
         );
 
-        Root = IsInHostedEnvironment == false ? Root / "Test Environment" : Root;
+        this.Environment = new(name, type, root, isInHostedEnvironment);
+
+        // TODO: Implment Global and Local
     }
+
+    public record Environment(string Name, HostingType Type, Directory Root, bool IsInHostedEnvironment);
+    public record Directories(Directory Deployment, Directory Live, Directory Settings, Directory Storage);
 }
