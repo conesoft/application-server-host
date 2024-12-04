@@ -24,6 +24,8 @@ static class AddHostEnvironmentInfoExtension
                 configuration.AddJsonFile(System.IO.Path.Combine(root, "Settings", "hosting.json"));
             }
             configuration.AddJsonFile(System.IO.Path.Combine(root, "Settings", "settings.json"));
+
+            // TODO: Add root/settings/{live deployment directory name}/settings, make it reloadable/changeable. https://github.com/conesoft/application-server-host/issues/9
         }
         if (Directory.Common.Current.FilteredFiles("Deploy.pubxml", allDirectories: true).FirstOrDefault() is File file)
         {
