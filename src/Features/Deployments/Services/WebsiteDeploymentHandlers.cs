@@ -9,14 +9,14 @@ using System.Diagnostics;
 
 namespace Conesoft.Server_Host.Features.Deployments.Services;
 
-class WebsiteDeploymentHandler(HostEnvironmentInfo info, IControlActiveProcesses activeProcesses, IControlActivePorts activePorts) :
+class WebsiteDeploymentHandler(HostEnvironmentInfo environment, IControlActiveProcesses activeProcesses, IControlActivePorts activePorts) :
     IListener<StartDeployment>,
     IListener<StopDeployment>
 {
     void IListener<StartDeployment>.Listen(StartDeployment message)
     {
         Log.Information("Starting Website Deployment for {message}", message.Source.NameWithoutExtension);
-        var target = info.Root / "Live";
+        var target = environment.Global.Live;
 
         var directory = target / message.Source.Parent.Name / message.Source.NameWithoutExtension;
         message.Source.AsZip().ExtractTo(directory);
@@ -39,8 +39,7 @@ class WebsiteDeploymentHandler(HostEnvironmentInfo info, IControlActiveProcesses
         activePorts.RemovePort(message.Source.NameWithoutExtension);
         activeProcesses.Kill(message.Source.NameWithoutExtension);
 
-        var target = info.Root / "Live";
-        var directory = target / message.Source.Parent.Name / message.Source.NameWithoutExtension;
+        var directory = environment.Global.Live / message.Source.Parent.Name / message.Source.NameWithoutExtension;
         directory.Delete();
     }
 }

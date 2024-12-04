@@ -8,14 +8,14 @@ using System.Diagnostics;
 
 namespace Conesoft.Server_Host.Features.Deployments.Services;
 
-class ServiceDeploymentHandler(HostEnvironmentInfo info, IControlActiveProcesses activeProcesses) :
+class ServiceDeploymentHandler(HostEnvironmentInfo environment, IControlActiveProcesses activeProcesses) :
     IListener<StartDeployment>,
     IListener<StopDeployment>
 {
     void IListener<StartDeployment>.Listen(StartDeployment message)
     {
         Log.Information("Starting Service Deployment for {message}", message.Source.NameWithoutExtension);
-        var target = info.Root / "Live" / message.Source.Parent.Name / message.Source.NameWithoutExtension;
+        var target = environment.Global.Live / message.Source.Parent.Name / message.Source.NameWithoutExtension;
         message.Source.AsZip().ExtractTo(target);
 
         if (target.FilteredFiles("*.exe", allDirectories: false).FirstOrDefault() is File executable)
@@ -34,7 +34,7 @@ class ServiceDeploymentHandler(HostEnvironmentInfo info, IControlActiveProcesses
         Log.Information("Stopping Service Deployment for {message}", message.Source.NameWithoutExtension);
         activeProcesses.Kill(message.Source.NameWithoutExtension);
 
-        var target = info.Root / "Live";
+        var target = environment.Global.Live;
         var directory = target / message.Source.Parent.Name / message.Source.NameWithoutExtension;
         directory.Delete();
     }

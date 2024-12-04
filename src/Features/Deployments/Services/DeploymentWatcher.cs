@@ -10,8 +10,8 @@ class DeploymentWatcher(HostEnvironmentInfo info, Mediator mediator) : Backgroun
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var source = info.Root / "Deployments";
-        var target = info.Root / "Live";
+        var source = info.Global.Deployments;
+        var target = info.Global.Live;
         source.Create();
         target.Create();
 

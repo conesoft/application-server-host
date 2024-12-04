@@ -8,14 +8,14 @@ using System.Diagnostics;
 
 namespace Conesoft.Server_Host.Features.Deployments.Services;
 
-class HostDeploymentHandler(HostEnvironmentInfo info, ActiveProcessesService activeProcesses, IHostApplicationLifetime app) :
+class HostDeploymentHandler(HostEnvironmentInfo environment, ActiveProcessesService activeProcesses, IHostApplicationLifetime app) :
     IListener<StartDeployment>,
     IListener<StopDeployment>
 {
     void IListener<StartDeployment>.Listen(StartDeployment message)
     {
         Log.Information("Starting Host Deployment for {message}", message.Source.NameWithoutExtension);
-        var target = info.Root / "Live" / message.Source.Parent.Name / message.Source.NameWithoutExtension;
+        var target = environment.Global.Live / message.Source.Parent.Name / message.Source.NameWithoutExtension;
 
 
         if (message.Source.Info.LastWriteTimeUtc > target.Info.LastWriteTimeUtc)

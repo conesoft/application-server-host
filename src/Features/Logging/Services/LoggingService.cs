@@ -7,17 +7,18 @@ namespace Conesoft.Server_Host.Features.Logging.Services;
 
 class LoggingService : IHostedService
 {
-    private readonly HostEnvironmentInfo hosting;
+    private readonly HostEnvironmentInfo environment;
 
-    public LoggingService(HostEnvironmentInfo hosting)
+    public LoggingService(HostEnvironmentInfo environment)
     {
-        this.hosting = hosting;
-        if (hosting.IsInHostedEnvironment)
+        this.environment = environment;
+        if (environment.Environment.IsInHostedEnvironment)
         {
-            var path = hosting.Root / "Logs" / $"{hosting.Type} - {hosting.Name}";
+            // TODO: Improve paths :D
+            var path = environment.Global.Storage.Parent / "Logs" / $"{environment.Environment.Type} - {environment.Environment.Name}";
 
-            var txt = path / "as Text" / Filename.From(hosting.Name + " - ", "txt");
-            var log = path / Filename.From(hosting.Name + " - ", "log");
+            var txt = path / "as Text" / Filename.From(environment.Environment.Name + " - ", "txt");
+            var log = path / Filename.From(environment.Environment.Name + " - ", "log");
 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
@@ -59,13 +60,13 @@ class LoggingService : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        Log.Information($"app '{hosting.Name}' started");
+        Log.Information($"app '{environment.Environment.Name}' started");
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        Log.Information($"app '{hosting.Name}' stopped");
+        Log.Information($"app '{environment.Environment.Name}' stopped");
         return Task.CompletedTask;
     }
 }

@@ -7,7 +7,6 @@ namespace Conesoft.Server_Host.Features.HostEnvironment;
 
 class HostEnvironmentInfo
 {
-    public enum HostingType { Application, Service, Website }
 
     public Environment Environment { get; private init; }
 
@@ -42,18 +41,19 @@ class HostEnvironmentInfo
             ;
 
         var isInHostedEnvironment = assembly.Location.StartsWith(
-            System.IO.Path.TrimEndingDirectorySeparator(Root.Path) + System.IO.Path.DirectorySeparatorChar,
+            System.IO.Path.TrimEndingDirectorySeparator(root.Path) + System.IO.Path.DirectorySeparatorChar,
             StringComparison.OrdinalIgnoreCase
         );
 
         this.Environment = new(name, type, root, isInHostedEnvironment);
 
-        Global = new(Deployment: root / "Deployment", Live: root / "Live", Storage: root / "Storage");
+        Global = new(Deployments: root / "Deployments", Live: root / "Live", Storage: root / "Storage");
 
         // TODO: Implment Local
         Local = default!;
     }
-
-    public record Environment(string Name, HostingType Type, Directory Root, bool IsInHostedEnvironment);
-    public record Directories(Directory Deployment, Directory Live, Directory Storage);
 }
+
+public enum HostingType { Application, Service, Website }
+public record Environment(string Name, HostingType Type, Directory Root, bool IsInHostedEnvironment);
+public record Directories(Directory Deployments, Directory Live, Directory Storage);
