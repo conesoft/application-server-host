@@ -25,7 +25,9 @@ class HostEnvironmentInfo
             throw new ApplicationException("Application Name Configuration not found");
         }
 
-        var name = Assembly.GetExecutingAssembly().GetName().Name!;
+        var assembly = Assembly.GetExecutingAssembly();
+
+        var name = assembly.GetName().Name!;
 
         var root =
             hostingOptions.Value.Root != "" ?
@@ -39,14 +41,17 @@ class HostEnvironmentInfo
             HostingType.Application
             ;
 
-        var isInHostedEnvironment = Assembly.GetExecutingAssembly().Location.StartsWith(
+        var isInHostedEnvironment = assembly.Location.StartsWith(
             System.IO.Path.TrimEndingDirectorySeparator(Root.Path) + System.IO.Path.DirectorySeparatorChar,
             StringComparison.OrdinalIgnoreCase
         );
 
         this.Environment = new(name, type, root, isInHostedEnvironment);
 
-        // TODO: Implment Global and Local
+        Global = new(Deployment: root / "Deployment", Live: root / "Live", Settings: root / "Settings", Storage: root / "Storage");
+
+        // TODO: Implment Local
+        Local = default!;
     }
 
     public record Environment(string Name, HostingType Type, Directory Root, bool IsInHostedEnvironment);
