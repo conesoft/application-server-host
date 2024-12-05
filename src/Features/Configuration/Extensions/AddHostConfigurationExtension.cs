@@ -29,15 +29,19 @@ static class AddHostEnvironmentInfoExtension
 
     private static ConfigurationManager AddHostConfigurationToConfiguration(this ConfigurationManager configuration, bool developmentMode)
     {
-        if (configuration["hosting:root"] is string root)
+        var deployFile = Directory.Common.Current.FilteredFiles("Deploy.pubxml", allDirectories: true).FirstOrDefault();
+        var appName = deployFile switch
         {
-            var appName = Directory.Common.Current.FilteredFiles("Deploy.pubxml", allDirectories: true).FirstOrDefault() switch
-            {
-                File file => XDocument.Load(file.Path).XPathSelectElement("//Name|//Domain")?.Value,
-                _ => IO.Path.GetFileName(IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))!
-            };
-            configuration.AddInMemoryCollection([new("hosting:appname", appName)]);
+            File file => XDocument.Load(file.Path).XPathSelectElement("//Name|//Domain")?.Value,
+            _ => IO.Path.GetFileName(IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))!
+        };
+        configuration.AddInMemoryCollection([new("hosting:appname", appName)]);
 
+        var rootFromConfig = configuration["hosting:root"];
+        var rootFromDeployHostingValue = deployFile != null ? XDocument.Load(deployFile.Path).XPathSelectElement("//Hosting")?.Value : null;
+        if (rootFromConfig is not null || rootFromDeployHostingValue is not null)
+        {
+            var root = rootFromConfig ?? Directory.From(rootFromDeployHostingValue!).Parent.Parent.Path;
             configuration.AddJsonFile(IO.Path.Combine(root, "Settings", "settings.json"));
             if (developmentMode == false)
             {
