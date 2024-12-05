@@ -4,7 +4,6 @@ using Conesoft.Server_Host.Features.ActivePorts.Messages;
 using Conesoft.Server_Host.Features.ActiveProcesses.Services;
 using Conesoft.Server_Host.Features.MediatorService.Services;
 using System.Diagnostics;
-using System.Net.Http;
 
 namespace Conesoft.Server_Host.Features.ActivePorts.Services;
 
