@@ -1,5 +1,3 @@
-﻿using Conesoft.Files;
+﻿namespace Conesoft.Server_Host.Features.Deployments.Messages;
 
-namespace Conesoft.Server_Host.Features.Deployments.Messages;
-
-record StopDeployment(File Source);
+record StopDeployment(Files.File Source);

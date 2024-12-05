@@ -8,7 +8,7 @@ class ProcessTracker(bool closeOnExit = true)
     ChildProcessTracker? current = closeOnExit ? new() : null;
     readonly HashSet<Process> tracked = [];
 
-    public Process Track(Process? p)
+    public Process? Track(Process? p)
     {
         if (p != null)
         {

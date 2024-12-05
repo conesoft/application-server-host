@@ -1,6 +1,6 @@
 ﻿using Conesoft.Files;
+using Conesoft.Hosting;
 using Conesoft.Server_Host.Features.Certificates.Interfaces;
-using Conesoft.Server_Host.Features.Configuration.Options;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -8,7 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Conesoft.Server_Host.Features.Certificates;
 
-class CertificateSelector(HostEnvironmentInfo.HostEnvironment environment, IOptions<HostingOptions> options) : BackgroundService, ISelectCertificate
+class CertificateSelector(HostEnvironment environment, IOptions<HostingOptions> options) : BackgroundService, ISelectCertificate
 {
     readonly X509Certificate2 @default = CertificateLoader.LoadFromStoreCert("localhost", "My", StoreLocation.CurrentUser, allowInvalid: true);
     Dictionary<string, X509Certificate2> certificates = [];

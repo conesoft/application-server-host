@@ -1,4 +1,4 @@
-using Conesoft.Server_Host.Helpers;
+using Conesoft.Hosting;
 
 namespace Conesoft.Server_Host.Features.SelfDeployment.Extensions;
 

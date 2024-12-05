@@ -1,5 +1,5 @@
-﻿using Conesoft.Server_Host.Features.MediatorService.Interfaces;
-using Conesoft.Server_Host.Helpers;
+﻿using Conesoft.Hosting;
+using Conesoft.Server_Host.Features.MediatorService.Interfaces;
 using Serilog;
 
 namespace Conesoft.Server_Host.Features.MediatorService.Services;

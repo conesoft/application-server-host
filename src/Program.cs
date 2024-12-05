@@ -2,16 +2,13 @@
 using Conesoft.Server_Host.Features.ActiveProcesses.Extensions;
 using Conesoft.Server_Host.Features.Certificates;
 using Conesoft.Server_Host.Features.Certificates.Extensions;
-using Conesoft.Server_Host.Features.Configuration.Extensions;
 using Conesoft.Server_Host.Features.Deployments.Extensions;
-using Conesoft.Server_Host.Features.GarbageCollection.Extensions;
-using Conesoft.Server_Host.Features.HostEnvironmentInfo.Extensions;
-using Conesoft.Server_Host.Features.Logging.Extensions;
 using Conesoft.Server_Host.Features.MediatorService.Extensions;
 using Conesoft.Server_Host.Features.ProxyTarget;
 using Conesoft.Server_Host.Features.ProxyTarget.Extensions;
 using Conesoft.Server_Host.Features.SelfDeployment.Extensions;
 using Conesoft.Server_Host.Features.WebApplication.Extensions;
+using Conesoft.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,8 +17,6 @@ builder.AddHostEnvironmentInfo();
 builder.AddLoggingService();
 
 builder.AddSelfDeploymentHandling();
-
-builder.AddGarbageCollection();
 
 builder.AddMediator();
 

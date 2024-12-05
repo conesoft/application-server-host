@@ -1,11 +1,12 @@
 ﻿using Conesoft.Files;
+using Conesoft.Hosting;
 using Conesoft.Server_Host.Features.Deployments.Messages;
 using Conesoft.Server_Host.Features.MediatorService.Services;
 using Serilog;
 
 namespace Conesoft.Server_Host.Features.Deployments.Services;
 
-class DeploymentWatcher(HostEnvironmentInfo.HostEnvironment info, Mediator mediator) : BackgroundService
+class DeploymentWatcher(HostEnvironment info, Mediator mediator) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

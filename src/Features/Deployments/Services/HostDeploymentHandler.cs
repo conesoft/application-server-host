@@ -1,4 +1,4 @@
-﻿using Conesoft.Files;
+﻿using Conesoft.Hosting;
 using Conesoft.Server_Host.Features.ActiveProcesses.Services;
 using Conesoft.Server_Host.Features.Deployments.Messages;
 using Conesoft.Server_Host.Features.MediatorService.Interfaces;
@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace Conesoft.Server_Host.Features.Deployments.Services;
 
-class HostDeploymentHandler(HostEnvironmentInfo.HostEnvironment environment, ActiveProcessesService activeProcesses, IHostApplicationLifetime app) :
+class HostDeploymentHandler(HostEnvironment environment, ActiveProcessesService activeProcesses, IHostApplicationLifetime app) :
     IListener<StartDeployment>,
     IListener<StopDeployment>
 {
@@ -29,7 +29,7 @@ class HostDeploymentHandler(HostEnvironmentInfo.HostEnvironment environment, Act
                 Log.Error("Could not extract to {directory} due to {exception}", target, e);
             }
 
-            if (target.FilteredFiles("*.exe", allDirectories: false).FirstOrDefault() is File executable)
+            if (target.FilteredFiles("*.exe", allDirectories: false).FirstOrDefault() is Files.File executable)
             {
                 var start = new ProcessStartInfo(executable.Path)
                 {

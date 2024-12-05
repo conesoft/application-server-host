@@ -1,4 +1,4 @@
-﻿using Conesoft.Files;
+﻿using Conesoft.Hosting;
 using Conesoft.Server_Host.Features.ActiveProcesses.Interfaces;
 using Conesoft.Server_Host.Features.Deployments.Messages;
 using Conesoft.Server_Host.Features.MediatorService.Interfaces;
@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace Conesoft.Server_Host.Features.Deployments.Services;
 
-class ServiceDeploymentHandler(HostEnvironmentInfo.HostEnvironment environment, IControlActiveProcesses activeProcesses) :
+class ServiceDeploymentHandler(HostEnvironment environment, IControlActiveProcesses activeProcesses) :
     IListener<StartDeployment>,
     IListener<StopDeployment>
 {
@@ -17,7 +17,7 @@ class ServiceDeploymentHandler(HostEnvironmentInfo.HostEnvironment environment, 
         var target = environment.Global.Live / message.Source.Parent.Name / message.Source.NameWithoutExtension;
         message.Source.AsZip().ExtractTo(target);
 
-        if (target.FilteredFiles("*.exe", allDirectories: false).FirstOrDefault() is File executable)
+        if (target.FilteredFiles("*.exe", allDirectories: false).FirstOrDefault() is Files.File executable)
         {
             var start = new ProcessStartInfo(executable.Path)
             {
