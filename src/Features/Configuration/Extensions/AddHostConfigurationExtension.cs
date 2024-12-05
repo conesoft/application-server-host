@@ -1,4 +1,4 @@
-﻿using Conesoft.Files;
+using Conesoft.Files;
 using Conesoft.Server_Host.Features.Configuration.Options;
 using System.Reflection;
 using System.Xml.Linq;
@@ -30,32 +30,59 @@ static class AddHostEnvironmentInfoExtension
     private static ConfigurationManager AddHostConfigurationToConfiguration(this ConfigurationManager configuration, bool developmentMode)
     {
         var deployFile = Directory.Common.Current.FilteredFiles("Deploy.pubxml", allDirectories: true).FirstOrDefault();
-        var appName = deployFile switch
+
+        var appName = FindAppName(configuration, deployFile);
+        var root = FindRoot(configuration, deployFile);
+
+        configuration.AddAppNameToConfiguration(appName);
+        configuration.AddRootToConfiguration(root);
+
+        configuration.AddJsonFile(IO.Path.Combine(root, "Settings", "settings.json"));
+        configuration.AddJsonFile(IO.Path.Combine(root, "Settings", appName + ".json"), optional: true, reloadOnChange: true);
+
+        if (developmentMode == false)
         {
-            File file => XDocument.Load(file.Path).XPathSelectElement("//Name|//Domain")?.Value,
-            _ => IO.Path.GetFileName(IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))!
-        };
+            configuration.AddJsonFile(IO.Path.Combine(root, "Settings", "hosting.json"));
+        }
+
+        return configuration;
+    }
+
+    private static string FindAppName(ConfigurationManager _, File? deployFile)
+    {
+        var appNameFromDeployFile = deployFile != null ? XDocument.Load(deployFile.Path).XPathSelectElement("//Name|//Domain")?.Value : null;
+
+        var appNameFromExecutingAssemblyPath = IO.Path.GetFileName(IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
+
+        return appNameFromDeployFile ?? appNameFromExecutingAssemblyPath ?? throw new Exception("Could not find hosting:appname from Deploy.pubxml or Executing Assembly Location");
+    }
+
+    private static void AddAppNameToConfiguration(this ConfigurationManager configuration, string appName)
+    {
         configuration.AddInMemoryCollection([new("hosting:appname", appName)]);
+    }
 
-        var rootFromConfig = configuration["hosting:root"];
-        var rootFromDeployHostingValue = deployFile != null ? XDocument.Load(deployFile.Path).XPathSelectElement("//Hosting")?.Value : null;
-        if (rootFromConfig is not null || rootFromDeployHostingValue is not null)
+    private static string FindRoot(ConfigurationManager configuration, File? deployFile)
+    {
+        var rootFromConfiguration = configuration["hosting:root"];
+
+        var rootFromDeployHostingValue = deployFile switch
         {
-            var root = rootFromConfig ?? Directory.From(rootFromDeployHostingValue!).Parent.Parent.Path;
-            configuration.AddJsonFile(IO.Path.Combine(root, "Settings", "settings.json"));
-            if (developmentMode == false)
+            File => XDocument.Load(deployFile.Path).XPathSelectElement("//Hosting")?.Value switch
             {
-                configuration.AddJsonFile(IO.Path.Combine(root, "Settings", "hosting.json"));
-            }
+                string path => Directory.From(path).Parent.Parent.Path,
+                _ => null
+            },
+            _ => null
+        };
 
-            var privateSettingsPath = IO.Path.Combine(root, "Settings", appName + ".json");
-            configuration.AddJsonFile(privateSettingsPath, optional: true, reloadOnChange: true);
+        var rootFromAssemblyParentPath = File.From(Assembly.GetExecutingAssembly().Location).Parent.Parent.Parent.Path;
 
-            return configuration;
-        }
-        else
-        {
-            throw new Exception("missing configuration for hosting:root in appsettings.json");
-        }
+        return rootFromConfiguration ?? rootFromDeployHostingValue ?? rootFromAssemblyParentPath ?? throw new Exception("Could not find hosting:root from appseettings.json, Deploy.pubxml or Executing Assembly Location");
+    }
+
+    private static void AddRootToConfiguration(this ConfigurationManager configuration, string root)
+    {
+        configuration.AddInMemoryCollection([new("hosting:root", root)]);
     }
 }
