@@ -12,7 +12,7 @@ using Conesoft.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddHostConfigurationFiles();
+builder.AddHostConfigurationFiles(legacyMode: false);
 builder.AddHostEnvironmentInfo();
 builder.AddLoggingService();
 

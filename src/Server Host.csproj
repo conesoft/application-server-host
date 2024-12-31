@@ -19,7 +19,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Conesoft.Files" Version="3.0.5" />
-		<PackageReference Include="Conesoft.Hosting" Version="3.0.4" />
+		<PackageReference Include="Conesoft.Hosting" Version="3.3.3" />
 		<PackageReference Include="Yarp.ReverseProxy" Version="2.2.0" />
 		<PackageReference Include="Conesoft.Network-Connections" Version="3.0.1" />
 		<PackageReference Include="System.Linq.Async" Version="6.0.1" />

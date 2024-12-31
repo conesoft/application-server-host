@@ -2,5 +2,5 @@
 
 public interface IWaitOneMessage
 {
-    Task WaitForNextMessage<Message>();
+    Task WaitForNextMessage<Message>(CancellationToken cancellationToken = default);
 }

@@ -19,7 +19,8 @@ static class AddWebApplicationExtensions
     {
         app.MapStaticAssets();
         app.MapRazorPages();
-        app.MapGet("/statechange", (IWaitOneMessage mediator) => mediator.WaitForNextMessage<HostStateChanged>());
+        app.MapGet("/statechange", (CancellationToken cancellationToken, IWaitOneMessage mediator) =>
+            mediator.WaitForNextMessage<HostStateChanged>(CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, app.Lifetime.ApplicationStopping).Token));
         return app;
     }
 }

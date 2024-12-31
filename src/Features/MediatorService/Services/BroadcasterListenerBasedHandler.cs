@@ -21,12 +21,12 @@ class BroadcasterListenerBasedHandler : IHandler, IWaitOneMessage
         }
     }
 
-    Task IWaitOneMessage.WaitForNextMessage<Message>()
+    Task IWaitOneMessage.WaitForNextMessage<Message>(CancellationToken cancellationToken)
     {
         ChangeBroadcaster broadcaster = new();
         var queue = broadcasterMap.GetValueOrDefault(typeof(Message)) ?? new();
         queue.Enqueue(broadcaster);
         broadcasterMap[typeof(Message)] = queue;
-        return broadcaster.WaitForChange();
+        return broadcaster.WaitForChange(cancellationToken).ReturnWhenCancelled();
     }
 }
