@@ -2,12 +2,10 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
+		<TargetFramework>net9.0</TargetFramework>
 		<RootNamespace>Server_Host</RootNamespace>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<UseWPF>true</UseWPF>
-		<UseWindowsForms>true</UseWindowsForms>
 		<AssemblyName>Server Host 2.0</AssemblyName>
 		<RootNamespace>Conesoft.Server_Host</RootNamespace>
 		<Authors>davepermen</Authors>
@@ -20,18 +18,28 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Conesoft.Files" Version="2.1.3" />
-		<PackageReference Include="Conesoft.Hosting" Version="1.6.6" />
-		<PackageReference Include="MahApps.Metro" Version="2.4.10" />
-		<PackageReference Include="Meziantou.WpfFontAwesome" Version="5.15.4" />
-		<PackageReference Include="System.Text.Json" Version="8.0.5" />
+		<PackageReference Include="Conesoft.Files" Version="3.0.5" />
+		<PackageReference Include="Conesoft.Hosting" Version="3.3.4" />
+		<PackageReference Include="SimpleTrayIcon" Version="3.0.2" />
+		<PackageReference Include="System.Management" Version="9.0.0" />
 		<PackageReference Include="Yarp.ReverseProxy" Version="2.2.0" />
-		<PackageReference Include="Conesoft.Network-Connections" Version="2.0.0" />
+		<PackageReference Include="Conesoft.Network-Connections" Version="3.0.1" />
 		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<Page Include="Features\DesktopApplication\**\*.xaml" />
+		<Content Include="Icons\*.*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Update="wwwroot\Server.Dark.ico">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Update="wwwroot\Server.Light.ico">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
 	</ItemGroup>
 
 	<!-- dotnet restore after building fixes the wpf ui designer from breaking visual studio -->

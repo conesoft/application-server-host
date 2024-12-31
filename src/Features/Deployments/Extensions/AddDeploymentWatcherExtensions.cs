@@ -1,6 +1,6 @@
 using Conesoft.Server_Host.Features.Deployments.Messages;
 using Conesoft.Server_Host.Features.Deployments.Services;
-using Conesoft.Server_Host.Features.Mediator.Extensions;
+using Conesoft.Server_Host.Features.MediatorService.Extensions;
 
 namespace Conesoft.Server_Host.Features.Deployments.Extensions;
 

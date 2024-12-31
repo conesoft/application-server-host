@@ -7,6 +7,13 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "applicationUrl": "https://localhost:49575;http://localhost:49576"
+    },
+    "Deployment Test": {
+      "commandName": "Project",
+      "commandLineArgs": "-deploy \"D:\\Hosting\\Deployments\\Host\\Conesoft - Server Host.zip\"",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
     }
   }
 }

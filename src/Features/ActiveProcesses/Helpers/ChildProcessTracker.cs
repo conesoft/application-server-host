@@ -3,61 +3,39 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Conesoft.Server_Host.Features.ActiveProcesses.Helpers;
-
 // From https://stackoverflow.com/a/37034966/1528847
 
-/// <summary>
-/// Allows processes to be automatically killed if this parent process unexpectedly quits.
-/// This feature requires Windows 8 or greater. On Windows 7, nothing is done.</summary>
-/// <remarks>References:
-///  https://stackoverflow.com/a/4657392/386091
-///  https://stackoverflow.com/a/9164742/386091 </remarks>
-public static class ChildProcessTracker
+class ChildProcessTracker : IDisposable
 {
-    /// <summary>
-    /// Add the process to be tracked. If our current process is killed, the child processes
-    /// that we are tracking will be automatically killed, too. If the child process terminates
-    /// first, that's fine, too.</summary>
-    /// <param name="process"></param>
-    public static Process? Track(Process? process)
+    private readonly nint s_jobHandle;
+
+    public ChildProcessTracker()
+    {
+        if (Environment.OSVersion.Version < new Version(6, 2))
+            return;
+
+        s_jobHandle = CreateJobObject(nint.Zero, "ChildProcessTracker" + Process.GetCurrentProcess().Id);
+        SetTracking(true);
+    }
+
+    public Process? Track(Process? process)
     {
         if (s_jobHandle != nint.Zero && process != null)
         {
-            bool success = AssignProcessToJobObject(s_jobHandle, process.Handle);
-            if (!success && !process.HasExited)
+            if (!AssignProcessToJobObject(s_jobHandle, process.Handle) && !process.HasExited)
                 throw new Win32Exception();
         }
         return process;
     }
 
-    static ChildProcessTracker()
+    private void SetTracking(bool tracking)
     {
-        // This feature requires Windows 8 or later. To support Windows 7 requires
-        //  registry settings to be added if you are using Visual Studio plus an
-        //  app.manifest change.
-        //  https://stackoverflow.com/a/4232259/386091
-        //  https://stackoverflow.com/a/9507862/386091
-        if (Environment.OSVersion.Version < new Version(6, 2))
-            return;
-
-        // The job name is optional (and can be null) but it helps with diagnostics.
-        //  If it's not null, it has to be unique. Use SysInternals' Handle command-line
-        //  utility: handle -a ChildProcessTracker
-        string jobName = "ChildProcessTracker" + Process.GetCurrentProcess().Id;
-        s_jobHandle = CreateJobObject(nint.Zero, jobName);
-
-        var info = new JOBOBJECT_BASIC_LIMIT_INFORMATION
-        {
-
-            // This is the key flag. When our process is killed, Windows will automatically
-            //  close the job handle, and when that happens, we want the child processes to
-            //  be killed, too.
-            LimitFlags = JOBOBJECTLIMIT.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-        };
-
         var extendedInfo = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION
         {
-            BasicLimitInformation = info
+            BasicLimitInformation = new()
+            {
+                LimitFlags = tracking ? JOBOBJECTLIMIT.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE : 0
+            }
         };
 
         int length = Marshal.SizeOf(typeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION));
@@ -65,9 +43,7 @@ public static class ChildProcessTracker
         try
         {
             Marshal.StructureToPtr(extendedInfo, extendedInfoPtr, false);
-
-            if (!SetInformationJobObject(s_jobHandle, JobObjectInfoType.ExtendedLimitInformation,
-                extendedInfoPtr, (uint)length))
+            if (!SetInformationJobObject(s_jobHandle, JobObjectInfoType.ExtendedLimitInformation, extendedInfoPtr, (uint)length))
             {
                 throw new Win32Exception();
             }
@@ -77,6 +53,10 @@ public static class ChildProcessTracker
             Marshal.FreeHGlobal(extendedInfoPtr);
         }
     }
+
+    public void DeactivateTracking() => SetTracking(false);
+
+    public void Dispose() => CloseHandle(s_jobHandle);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     static extern nint CreateJobObject(nint lpJobAttributes, string name);
@@ -88,11 +68,8 @@ public static class ChildProcessTracker
     [DllImport("kernel32.dll", SetLastError = true)]
     static extern bool AssignProcessToJobObject(nint job, nint process);
 
-    // Windows will automatically close any open job handles when our process terminates.
-    //  This can be verified by using SysInternals' Handle utility. When the job handle
-    //  is closed, the child processes will be killed.
-    private static readonly nint s_jobHandle;
-
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern bool CloseHandle(nint handle);
 
     enum JobObjectInfoType
     {
