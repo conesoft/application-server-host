@@ -9,6 +9,7 @@ using Conesoft.Server_Host.Features.ProxyTarget.Extensions;
 using Conesoft.Server_Host.Features.SelfDeployment.Extensions;
 using Conesoft.Server_Host.Features.WebApplication.Extensions;
 using Conesoft.Hosting;
+using Conesoft.Server_Host.Features.TrayIcon.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,7 @@ builder.AddSelfDeploymentHandling();
 builder.AddMediator();
 
 builder.AddWebApplication();
+builder.AddTrayIcon();
 builder.UseCertificateSelector<CertificateSelector>();
 builder.AddProxyTargetSelection<SelectActiveTarget>();
 builder.AddActiveProcesses();
