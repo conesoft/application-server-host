@@ -32,8 +32,8 @@ builder.AddDeploymentWatcher();
 var app = builder.Build();
 
 app.UseLoggingServiceOnRequests();
-app.MapProxyTargets();
 app.MapWebApplication();
+app.MapProxyTargets();
 app.MapGet("/{**catchall}", (string? catchall) => Results.Text("404 Not Found: Wrong Domain", statusCode: 404));
 
 app.Run();
