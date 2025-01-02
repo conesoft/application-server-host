@@ -30,11 +30,19 @@ class DeploymentWatcher(HostEnvironment info, Mediator mediator) : BackgroundSer
 
                 foreach (var file in changes.Deleted.Concat(changes.Changed).Where(f => f.Parent.Parent == source))
                 {
+                    if (file.Exists)
+                    {
+                        await file.WaitTillReadyAsync();
+                    }
                     Log.Information("Removing deployment of {file} in {type}", file.NameWithoutExtension, file.Parent.Name);
                     mediator.Notify(new StopDeployment(Source: file));
                 }
                 foreach (var file in changes.Added.Concat(changes.Changed).Where(f => f.Parent.Parent == source))
                 {
+                    if (file.Exists)
+                    {
+                        await file.WaitTillReadyAsync();
+                    }
                     Log.Information("Deploying {file} to {type}", file.NameWithoutExtension, file.Parent.Name);
                     mediator.Notify(new StartDeployment(Source: file));
                 }

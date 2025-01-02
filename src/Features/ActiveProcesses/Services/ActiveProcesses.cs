@@ -15,11 +15,17 @@ public class ActiveProcessesService(Mediator mediator) : IControlActiveProcesses
 
     void IControlActiveProcesses.Kill(string name)
     {
-        if(services.TryGetValue(name, out var process))
+        if (services.TryGetValue(name, out var process))
         {
             mediator.Notify(new OnProcessGettingKilled(name, process));
-            process.Kill();
-            process.WaitForExit();
+            try
+            {
+                process.Kill();
+                process.WaitForExit();
+            }
+            catch (Exception)
+            {
+            }
             services.Remove(name);
             mediator.Notify(new OnProcessKilled(name));
         }
@@ -29,9 +35,14 @@ public class ActiveProcessesService(Mediator mediator) : IControlActiveProcesses
     {
         (this as IControlActiveProcesses).Kill(name);
         mediator.Notify(new OnNewProcessGettingLaunched(name));
-        if(tracker.Track(Process.Start(startInfo)) is Process process)
+        if (tracker.Track(Process.Start(startInfo)) is Process process)
         {
             services[name] = process;
+            process.EnableRaisingEvents = true;
+            process.Exited += (_,_) =>
+            {
+                (this as IControlActiveProcesses).Kill(name);
+            };
             mediator.Notify(new OnNewProcessLaunched(name, process));
         }
     }

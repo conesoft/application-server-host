@@ -13,7 +13,7 @@ using Conesoft.Server_Host.Features.TrayIcon.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddHostConfigurationFiles(legacyMode: false);
+builder.AddHostConfigurationFiles();
 builder.AddHostEnvironmentInfo();
 builder.AddLoggingService();
 
