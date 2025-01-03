@@ -24,7 +24,12 @@ class HostDeploymentHandler(HostEnvironment environment, ActiveProcessesService 
             try
             {
                 // TODO: fill script parameters, write to temporary .cmd, run temporary .cmd
-                var script = GenerateScript(null, null, null, null);
+                var script = GenerateScript(
+                    sourceZipFile: message.Source,
+                    destinationDirectory: target,
+                    sourceExecutable: Files.File.From(Process.GetCurrentProcess().StartInfo.FileName),
+                    destinationExecutable: target / Filename.From(null /*filename from exe in zip*/, "exe")
+                );
                 var updateFile = Files.Directory.From(Path.GetTempPath()) / Filename.From($"conesoft updater - {Guid.NewGuid()}", "cmd");
                 await updateFile.WriteText(script);
                 Process.Start(updateFile.Path);
@@ -34,17 +39,6 @@ class HostDeploymentHandler(HostEnvironment environment, ActiveProcessesService 
             catch (Exception e)
             {
                 Log.Error("Could not extract to {directory} due to {exception}", target, e);
-            }
-
-            if (target.FilteredFiles("*.exe", allDirectories: false).FirstOrDefault() is Files.File executable)
-            {
-                var start = new ProcessStartInfo(executable.Path)
-                {
-                    WorkingDirectory = target.Path,
-                    Arguments = "-deploy-with-processes " + string.Join(" ", activeProcesses.Services.Values.Select(p => p.Process.Id)),
-                    CreateNoWindow = true
-                };
-                Process.Start(start);
             }
         }
         else
