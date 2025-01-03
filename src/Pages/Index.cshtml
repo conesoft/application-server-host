@@ -13,40 +13,28 @@
 </head>
 <body>
     <h1>Conesoft Host</h1>
-    <section style="--accent-color: var(--accent)">
-        <header>Websites</header>
-        <ul>
-            @foreach (var website in webApplicationService.Host.Websites)
-            {
-                <li style="@($"view-transition-name: process-{website.Process}")">
-                    <label>@website.Name</label>
-                    <aside>
-                        <p>@website.Description</p>
-                        <p><span>pid = </span>@website.Process</p>
-                        <p><span>port = </span>@website.Port</p>
-                    </aside>
-                    <img src="icons/webservice.svg" />
-                </li>
-            }
-        </ul>
-    </section>
-
-    <section style="--accent-color: var(--accent2)">
-        <header>Services</header>
-        <ul>
-            @foreach (var service in webApplicationService.Host.Services)
-            {
-                <li style="@($"view-transition-name: process-{service.Process}")">
-                    <label>@service.Name</label>
-                    <aside>
-                        <p>@service.Description</p>
-                        <p><span>pid = </span>@service.Process</p>
-                    </aside>
-                    <img src="icons/service.svg" />
-                </li>
-            }
-        </ul>
-    </section>
+    @foreach (var category in webApplicationService.Host.Services)
+    {
+        <section style="--accent-color: var(--accent)">
+            <header>@category.Key</header>
+            <ul>
+                @foreach (var service in category)
+                {
+                    <li style="@($"view-transition-name: process-{service.Process}")">
+                        <label>@service.Name</label>
+                        <aside>
+                            <p><span>pid = </span>@service.Process</p>
+                            @if (service.Port != null)
+                            {
+                                <p><span>port = </span>@service.Port</p>
+                            }
+                        </aside>
+                        <img src="icons/@(category.Key.ToLower()[..^1]).svg" />
+                    </li>
+                }
+            </ul>
+        </section>
+    }
 
     <script>
         async function wait() {

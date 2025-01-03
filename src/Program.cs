@@ -13,21 +13,26 @@ using Conesoft.Server_Host.Features.TrayIcon.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddHostConfigurationFiles();
-builder.AddHostEnvironmentInfo();
-builder.AddLoggingService();
+builder
+    .AddHostConfigurationFiles()
+    .AddHostEnvironmentInfo()
+    .AddLoggingService()
+    
+    .AddSelfDeploymentHandling()
+    
+    .AddMediator()
+    
+    .AddWebApplication()
+    .AddTrayIcon()
+    .UseCertificateSelector<CertificateSelector>()
+    .AddProxyTargetSelection<SelectActiveTarget>()
+    .AddActiveProcesses()
+    .AddActivePorts()
+    .AddDeploymentWatcher()
+    ;
 
-builder.AddSelfDeploymentHandling();
-
-builder.AddMediator();
-
-builder.AddWebApplication();
-builder.AddTrayIcon();
-builder.UseCertificateSelector<CertificateSelector>();
-builder.AddProxyTargetSelection<SelectActiveTarget>();
-builder.AddActiveProcesses();
-builder.AddActivePorts();
-builder.AddDeploymentWatcher();
+builder.Services
+    .AddHttpClient();
 
 var app = builder.Build();
 

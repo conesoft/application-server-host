@@ -7,17 +7,20 @@ using System.Diagnostics;
 
 namespace Conesoft.Server_Host.Features.ActivePorts.Services;
 
-public class ActivePortsService(Mediator mediator, ActiveProcessesService processes) : IControlActivePorts
+public class ActivePortsService(Mediator mediator, ActiveProcessesService processes, IHttpClientFactory clients) : IControlActivePorts
 {
+    readonly HttpClient client = clients.CreateClient();
+
     readonly Dictionary<string, ushort> ports = [];
 
     public IReadOnlyDictionary<string, ushort> Ports => ports;
 
     async void IControlActivePorts.FindPort(string name)
     {
-        if(processes.Services.TryGetValue(name, out var process))
+        if (IsValidDomain(name) && processes.Services.TryGetValue(name, out var entry))
         {
-            if (await FindHttpsPortOnProcess(process) is Connection connection)
+            var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            if (await FindHttpsPortOnProcess(entry.Process, timeout.Token).NullIfCancelled() is Connection connection)
             {
                 ports[name] = connection.Local.Port;
                 mediator.Notify(new OnPortFound(name, connection.Local.Port));
@@ -30,9 +33,9 @@ public class ActivePortsService(Mediator mediator, ActiveProcessesService proces
         ports.Remove(name);
     }
 
-    static Task<bool> IsHttpsPort(ushort port, CancellationToken ct) => new HttpClient().SendAsync(new HttpRequestMessage(HttpMethod.Head, $"https://localhost:{port}/"), ct).ContinueWith(t => t.IsCompletedSuccessfully);
+    Task<bool> IsHttpsPort(ushort port, CancellationToken ct) => client.SendAsync(new HttpRequestMessage(HttpMethod.Head, $"https://localhost:{port}/"), ct).ContinueWith(t => t.IsCompletedSuccessfully);
 
-    static async Task<Connection?> FindHttpsPortOnProcess(Process process, CancellationToken ct = default)
+    async Task<Connection?> FindHttpsPortOnProcess(Process process, CancellationToken ct = default)
     {
         while (ct.IsCancellationRequested == false)
         {
@@ -46,4 +49,6 @@ public class ActivePortsService(Mediator mediator, ActiveProcessesService proces
         }
         return null;
     }
+
+    static bool IsValidDomain(string domain) => Uri.TryCreate($"https://{domain}", UriKind.Absolute, out var result) && result.Scheme == Uri.UriSchemeHttps;
 }

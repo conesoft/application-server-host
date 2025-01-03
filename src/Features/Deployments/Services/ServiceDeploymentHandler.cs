@@ -1,4 +1,5 @@
 ﻿using Conesoft.Hosting;
+using Conesoft.Server_Host.Features.ActivePorts.Interfaces;
 using Conesoft.Server_Host.Features.ActiveProcesses.Interfaces;
 using Conesoft.Server_Host.Features.Deployments.Messages;
 using Conesoft.Server_Host.Features.MediatorService.Interfaces;
@@ -7,34 +8,43 @@ using System.Diagnostics;
 
 namespace Conesoft.Server_Host.Features.Deployments.Services;
 
-class ServiceDeploymentHandler(HostEnvironment environment, IControlActiveProcesses activeProcesses) :
+class ServiceDeploymentHandler(HostEnvironment environment, IControlActiveProcesses activeProcesses, IControlActivePorts activePorts) :
     IListener<StartDeployment>,
     IListener<StopDeployment>
 {
     void IListener<StartDeployment>.Listen(StartDeployment message)
     {
-        Log.Information("Starting Service Deployment for {message}", message.Source.NameWithoutExtension);
-        var target = environment.Global.Live / message.Source.Parent.Name / message.Source.NameWithoutExtension;
-        message.Source.AsZip().ExtractTo(target);
+        var name = message.Source.NameWithoutExtension;
+        var category = message.Source.Parent.Name;
 
-        if (target.FilteredFiles("*.exe", allDirectories: false).FirstOrDefault() is Files.File executable)
+        Log.Information("Starting {serviceType} Deployment for {message}", category, name);
+        var target = environment.Global.Live;
+
+        var directory = target / category / name;
+        message.Source.AsZip().ExtractTo(directory);
+
+        if (directory.FilteredFiles("*.exe", allDirectories: false).FirstOrDefault() is Files.File executable)
         {
-            var start = new ProcessStartInfo(executable.Path)
+            var start = new ProcessStartInfo(executable.Path, $"--urls=https://127.0.0.1:0/")
             {
-                WorkingDirectory = target.Path,
+                WorkingDirectory = directory.Path,
                 CreateNoWindow = true
             };
-            activeProcesses.Launch(message.Source.NameWithoutExtension, start);
+            activeProcesses.Launch(name, category, start);
+            activePorts.FindPort(name);
         }
     }
 
     void IListener<StopDeployment>.Listen(StopDeployment message)
     {
-        Log.Information("Stopping Service Deployment for {message}", message.Source.NameWithoutExtension);
-        activeProcesses.Kill(message.Source.NameWithoutExtension);
+        var name = message.Source.NameWithoutExtension;
+        var category = message.Source.Parent.Name;
 
-        var target = environment.Global.Live;
-        var directory = target / message.Source.Parent.Name / message.Source.NameWithoutExtension;
+        Log.Information("Stopping {serviceType} Deployment for {message}", category, name);
+        activePorts.RemovePort(name);
+        activeProcesses.Kill(name);
+
+        var directory = environment.Global.Live / category / name;
         directory.Delete();
     }
 }

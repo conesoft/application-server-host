@@ -12,7 +12,8 @@ static class AddDeploymentWatcherExtensions
 
         builder.Services
             .AddKeyedMediatingSingleton<ServiceDeploymentHandler>("Services")
-            .AddKeyedMediatingSingleton<WebsiteDeploymentHandler>("Websites")
+            .AddKeyedMediatingSingleton<ServiceDeploymentHandler>("Websites")
+            .AddKeyedMediatingSingleton<ServiceDeploymentHandler>("Plugins")
             .AddKeyedMediatingSingleton<HostDeploymentHandler>("Host")
             .AddKeyedMessage<StartDeployment>(m => m.Source.Parent.Name)
             .AddKeyedMessage<StopDeployment>(m => m.Source.Parent.Name)

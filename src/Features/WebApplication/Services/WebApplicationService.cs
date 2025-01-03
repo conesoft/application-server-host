@@ -22,17 +22,13 @@ class WebApplicationService(ActiveProcessesService activeProcesses, ActivePortsS
     void UpdateState()
     {
         Host = new Host(
-            Websites: activeProcesses.Services.Where(p => activePorts.Ports.ContainsKey(p.Key)).Select(p => new Host.Website(
-                Name: p.Key,
-                Description: Files.File.From(p.Value.StartInfo.FileName).Name,
-                Process: p.Value.Id,
-                Port: activePorts.Ports[p.Key]
-            )).ToArray(),
-            Services: activeProcesses.Services.Where(p => activePorts.Ports.ContainsKey(p.Key) == false).Select(p => new Host.Service(
-                Name: p.Key,
-                Description: Files.File.From(p.Value.StartInfo.FileName).Name,
-                Process: p.Value.Id
-            )).ToArray()
+            Services: activeProcesses.Services
+                .Select(s => new Host.Service(
+                    Name: s.Key,
+                    Process: s.Value.Process.Id,
+                    Port: activePorts.Ports.TryGetValue(s.Key, out var value) ? value : null,
+                    Category: s.Value.Category))
+                .ToLookup(s => s.Category)
         );
 
         mediator.Notify(new HostStateChanged());

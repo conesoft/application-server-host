@@ -25,8 +25,8 @@ class DeploymentWatcher(HostEnvironment info, Mediator mediator) : BackgroundSer
         {
             await foreach (var changes in source.Changes(allDirectories: true, cancellation: stoppingToken))
             {
-                Log.Information("Old " + string.Join(", ", changes.Deleted.Concat(changes.Changed)));
-                Log.Information("New " + string.Join(", ", changes.Added.Concat(changes.Changed)));
+                Log.Information("Old {entries}", changes.Deleted.Concat(changes.Changed).Select(f => f.Name));
+                Log.Information("New {entries}", changes.Added.Concat(changes.Changed).Select(f => f.Name));
 
                 foreach (var file in changes.Deleted.Concat(changes.Changed).Where(f => f.Parent.Parent == source))
                 {

@@ -1,9 +1,8 @@
 ﻿namespace Conesoft.Server_Host.Features.WebApplication.State;
 
-public record Host(Host.Website[] Websites, Host.Service[] Services)
+public record Host(ILookup<string, Host.Service> Services)
 {
-    public static Host Empty { get; } = new([], []);
+    public static Host Empty { get; } = new(Array.Empty<Service>().ToLookup(s => s.Category));
 
-    public record Website(string Name, int Process, ushort Port, string Description);
-    public record Service(string Name, int Process, string Description);
+    public record Service(string Name, int Process, ushort? Port, string Category);
 }
