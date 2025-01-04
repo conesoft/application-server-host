@@ -29,7 +29,11 @@ builder
     ;
 
 builder.Services
-    .AddHttpClient();
+    .AddHttpClient()
+    .AddHttpClient("shorttimeout", client =>
+    {
+        client.Timeout = TimeSpan.FromSeconds(1);
+    });
 
 var app = builder.Build();
 

@@ -33,7 +33,7 @@ class StateWriterService(ActiveProcessesService activeProcesses, ActivePortsServ
                         Process: s.Value.Process.Id,
                         Port: activePorts.Ports.TryGetValue(s.Key, out var value) ? value : null,
                         Category: s.Value.Category))
-                    .ToLookup(s => s.Category)
+                    .ToArray()
             );
 
             var file = environment.Global.Storage / "host" / Filename.From("state", "json");

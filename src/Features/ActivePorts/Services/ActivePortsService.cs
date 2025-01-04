@@ -3,13 +3,14 @@ using Conesoft.Server_Host.Features.ActivePorts.Interfaces;
 using Conesoft.Server_Host.Features.ActivePorts.Messages;
 using Conesoft.Server_Host.Features.ActiveProcesses.Services;
 using Conesoft.Server_Host.Features.MediatorService.Services;
+using Serilog;
 using System.Diagnostics;
 
 namespace Conesoft.Server_Host.Features.ActivePorts.Services;
 
 public class ActivePortsService(Mediator mediator, ActiveProcessesService processes, IHttpClientFactory clients) : IControlActivePorts
 {
-    readonly HttpClient client = clients.CreateClient();
+    readonly HttpClient client = clients.CreateClient("shorttimeout");
 
     readonly Dictionary<string, ushort> ports = [];
 
@@ -19,7 +20,7 @@ public class ActivePortsService(Mediator mediator, ActiveProcessesService proces
     {
         if (IsValidDomain(name) && processes.Services.TryGetValue(name, out var entry))
         {
-            var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             if (await FindHttpsPortOnProcess(entry.Process, timeout.Token).NullIfCancelled() is Connection connection)
             {
                 ports[name] = connection.Local.Port;
@@ -39,13 +40,20 @@ public class ActivePortsService(Mediator mediator, ActiveProcessesService proces
     {
         while (ct.IsCancellationRequested == false)
         {
-            var connections = process.GetListeningPorts();
-            var connection = await connections.ToAsyncEnumerable().FirstOrDefaultAwaitAsync(async c => await IsHttpsPort(c.Local.Port, ct), ct);
-            if (connection != null)
+            try
             {
-                return connection;
+                var connections = process.GetListeningPorts();
+                var connection = await connections.ToAsyncEnumerable().FirstOrDefaultAwaitAsync(async c => await IsHttpsPort(c.Local.Port, ct), ct);
+                if (connection != null)
+                {
+                    return connection;
+                }
+                await Task.Delay(200, ct);
             }
-            await Task.Delay(200, ct);
+            catch (Exception ex)
+            {
+                Log.Error("exception {exception}", ex);
+            }
         }
         return null;
     }
