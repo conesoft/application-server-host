@@ -1,4 +1,4 @@
-﻿namespace Conesoft.Server_Host.Features.WebApplication.State;
+﻿namespace Conesoft.Server_Host.Features.StateWriter.State;
 
 public record Host(ILookup<string, Host.Service> Services)
 {

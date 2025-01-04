@@ -28,6 +28,20 @@ static class AddMediatorExtensions
         return services;
     }
 
+    public static IServiceCollection AddMediatingHostedService<T>(this IServiceCollection services) where T : class, IHostedService
+    {
+        services.AddSingleton<T>();
+        services.AddHostedService(s => s.GetRequiredService<T>());
+        foreach (var i in typeof(T).GetInterfaces())
+        {
+            if (i.IsAssignableTo(typeof(IListener)) && i != typeof(IListener))
+            {
+                services.AddTransient(i, s => s.GetRequiredService<T>());
+            }
+        }
+        return services;
+    }
+
     public static IServiceCollection AddKeyedMediatingSingleton<T>(this IServiceCollection services, object? key) where T : class
     {
         services.AddSingleton<T>();

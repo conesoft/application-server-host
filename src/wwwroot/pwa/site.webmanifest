@@ -2,7 +2,7 @@
   "name": "Server Host by Conesoft",
   "short_name": "Server Host",
   "description": "simple server host for my homeserver",
-  "id": "https://localhost:49575",
+  "id": "https://localhost",
   "orientation": "any",
   "lang": "en",
   "dir": "auto",
@@ -19,7 +19,7 @@
   ],
   "theme_color": "#000000",
   "background_color": "#000000",
-  "start_url": "https://localhost:49575",
+  "start_url": "https://localhost",
   "display": "standalone",
   "display_override": [ "window-controls-overlay" ],
   "launch_handler": {

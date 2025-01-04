@@ -1,0 +1,65 @@
+﻿
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <base href="/" />
+
+    <link rel="icon" type="image/svg" sizes="32x32" href="/icons/conesoft-hosting.svg" />
+    <link rel="manifest" href="/pwa/site.webmanifest" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <title>Conesoft Server Host</title>
+    <style>
+        html, body {
+            background: black;
+            color: lightgray;
+            font-family: monospace;
+            font-weight: 100;
+            place-content: center;
+            min-height: 100%;
+            overflow: clip;
+            display: grid;
+            app-region: drag;
+        }
+
+        *:not(:has(*)) {
+            app-region: no-drag !important;
+        }
+
+        @keyframes flickerOpacity {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes flickerGlow {
+            from {
+                text-shadow: 0 0 2rem currentColor;
+            }
+
+            to {
+                text-shadow: 0 0 2rem transparent;
+            }
+        }
+
+        p {
+            font-size: 2rem;
+            animation: flickerOpacity 2s ease-in-out infinite alternate, flickerGlow 2s ease-in-out infinite alternate;
+        }
+
+        b {
+            display: inline;
+            color: mediumspringgreen;
+        }
+    </style>
+</head>
+<body>
+    <p>conesoft server host [<b>running</b>]</p>
+</body>
+</html>
