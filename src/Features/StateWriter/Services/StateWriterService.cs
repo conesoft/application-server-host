@@ -26,22 +26,31 @@ class StateWriterService(ActiveProcessesService activeProcesses, ActivePortsServ
         {
             await e.WaitAsync(stoppingToken).ReturnWhenCancelled();
 
-            var state = new Host(
-                Services: activeProcesses.Services
-                    .Select(s => new Host.Service(
-                        Name: s.Key,
-                        Process: s.Value.Process.Id,
-                        Port: activePorts.Ports.TryGetValue(s.Key, out var value) ? value : null,
-                        Category: s.Value.Category))
-                    .ToArray()
-            );
+            try
+            {
 
-            var file = environment.Global.Storage / "host" / Filename.From("state", "json");
-            file.Parent.Create();
+                var state = new Host(
+                    Services: activeProcesses.Services
+                        .Select(s => new Host.Service(
+                            Name: s.Key,
+                            Process: s.Value.Process.Id,
+                            Port: activePorts.Ports.TryGetValue(s.Key, out var value) ? value : null,
+                            Category: s.Value.Category))
+                        .ToArray()
+                );
 
-            await file.WriteAsJson(state);
+                var file = environment.Global.Storage / "host" / Filename.From("state", "json");
+                file.Parent.Create();
 
-            Log.Information("{service}: state written", "state writer");
+                await file.WriteAsJson(state);
+
+                Log.Information("{service}: state written", "state writer");
+            }
+            catch(Exception)
+            {
+                await Task.Delay(100, stoppingToken);
+                e.Set();
+            }
         }
         Log.Information("stopping {service}", "state writer");
     }

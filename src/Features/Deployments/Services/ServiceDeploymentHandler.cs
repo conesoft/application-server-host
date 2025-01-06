@@ -25,13 +25,20 @@ class ServiceDeploymentHandler(HostEnvironment environment, IControlActiveProces
 
         if (directory.FilteredFiles("*.exe", allDirectories: false).FirstOrDefault() is Files.File executable)
         {
-            var start = new ProcessStartInfo(executable.Path, $"--urls=https://127.0.0.1:0/")
+            try
             {
-                WorkingDirectory = directory.Path,
-                CreateNoWindow = true
-            };
-            activeProcesses.Launch(name, category, start);
-            activePorts.FindPort(name);
+                var start = new ProcessStartInfo(executable.Path, $"--urls=https://127.0.0.1:0/")
+                {
+                    WorkingDirectory = directory.Path,
+                    CreateNoWindow = true
+                };
+                activeProcesses.Launch(name, category, start);
+                activePorts.FindPort(name);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("exception {exception}", ex);
+            }
         }
     }
 
