@@ -8,3 +8,4 @@
 //using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Style", "VSTHRD200")]
+[assembly: SuppressMessage("CodeQuality", "IDE0079")]
