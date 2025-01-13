@@ -17,14 +17,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Conesoft.Files" Version="3.0.7" />
-		<PackageReference Include="Conesoft.Hosting" Version="3.3.9" />
+		<PackageReference Include="Conesoft.Hosting" Version="3.4.0" />
 		<PackageReference Include="Microsoft.VisualStudio.Threading" Version="17.12.19" />
 		<PackageReference Include="SimpleTrayIcon" Version="3.0.2" />
 		<PackageReference Include="System.Management" Version="9.0.0" />
 		<PackageReference Include="Yarp.ReverseProxy" Version="2.2.0" />
 		<PackageReference Include="Conesoft.Network-Connections" Version="3.0.1" />
-		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>
