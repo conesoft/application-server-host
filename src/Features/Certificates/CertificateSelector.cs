@@ -13,11 +13,7 @@ class CertificateSelector(HostEnvironment environment, IOptions<HostingOptions> 
     readonly X509Certificate2 @default = CertificateLoader.LoadFromStoreCert("localhost", "My", StoreLocation.CurrentUser, allowInvalid: true);
     Dictionary<string, X509Certificate2> certificates = [];
 
-    public X509Certificate2 CertificateFor(string domain)
-    {
-        Log.Information("Get Certificate For {domain}", domain);
-        return certificates.GetValueOrDefault(domain.Replace(".localhost", ""), @default);
-    }
+    public X509Certificate2 CertificateFor(string domain) => certificates.GetValueOrDefault(domain.Replace(".localhost", ""), @default);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
