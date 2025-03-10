@@ -1,10 +1,8 @@
 using Conesoft.Server_Host.Features.ProxyTarget.Interfaces;
-using Serilog;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using Yarp.ReverseProxy.Forwarder;
-using Yarp.ReverseProxy.Transforms;
 
 namespace Conesoft.Server_Host.Features.ProxyTarget.Extensions;
 
