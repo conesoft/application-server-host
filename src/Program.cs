@@ -3,6 +3,7 @@ using Conesoft.Server_Host.Features.ActivePorts.Extensions;
 using Conesoft.Server_Host.Features.ActiveProcesses.Extensions;
 using Conesoft.Server_Host.Features.Certificates;
 using Conesoft.Server_Host.Features.Certificates.Extensions;
+using Conesoft.Server_Host.Features.Certificates.Options;
 using Conesoft.Server_Host.Features.Deployments.Extensions;
 using Conesoft.Server_Host.Features.MediatorService.Extensions;
 using Conesoft.Server_Host.Features.ProxyTarget;
@@ -13,7 +14,10 @@ using Conesoft.Server_Host.Features.TrayIcon.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 builder
-    .AddHostConfigurationFiles()
+    .AddHostConfigurationFiles(configurator =>
+    {
+        configurator.Add<LetsEncryptConfiguration>("letsencrypt");
+    })
     .AddHostEnvironmentInfo()
     .AddLoggingService()
     
