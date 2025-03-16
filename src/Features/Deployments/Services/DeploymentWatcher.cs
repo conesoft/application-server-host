@@ -6,9 +6,11 @@ using Serilog;
 
 namespace Conesoft.Server_Host.Features.Deployments.Services;
 
-class DeploymentWatcher(HostEnvironment info, Mediator mediator) : BackgroundService
+class DeploymentWatcher(HostEnvironment info, Mediator mediator) : IHostedService
 {
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    CancellationTokenSource? cancellation;
+
+    Task IHostedService.StartAsync(CancellationToken cancellationToken)
     {
         var source = info.Global.Deployments;
         var target = info.Global.Live;
@@ -21,37 +23,33 @@ class DeploymentWatcher(HostEnvironment info, Mediator mediator) : BackgroundSer
 
         Log.Information("DeploymentWatcher starting to watch {source}", source);
 
-        try
+        cancellation = source.Changes(async changes =>
         {
-            await foreach (var changes in source.Changes(allDirectories: true, cancellation: stoppingToken))
-            {
-                Log.Information("Old {entries}", changes.Deleted.Concat(changes.Changed).Select(f => f.Name));
-                Log.Information("New {entries}", changes.Added.Concat(changes.Changed).Select(f => f.Name));
+            Log.Information("Old {entries}", changes.Deleted.Concat(changes.Changed).Select(f => f.Name));
+            Log.Information("New {entries}", changes.Added.Concat(changes.Changed).Select(f => f.Name));
 
-                foreach (var file in changes.Deleted.Concat(changes.Changed).Where(f => f.Parent.Parent == source))
+            foreach (var file in changes.Deleted.Concat(changes.Changed).Files().Where(f => f.Parent.Parent == source))
+            {
+                if (file.Exists)
                 {
-                    if (file.Exists)
-                    {
-                        await file.WaitTillReadyAsync();
-                    }
-                    Log.Information("Removing deployment of {file} in {type}", file.NameWithoutExtension, file.Parent.Name);
-                    mediator.Notify(new StopDeployment(Source: file));
+                    await file.WaitTillReadyAsync();
                 }
-                foreach (var file in changes.Added.Concat(changes.Changed).Where(f => f.Parent.Parent == source))
-                {
-                    if (file.Exists)
-                    {
-                        await file.WaitTillReadyAsync();
-                    }
-                    Log.Information("Deploying {file} to {type}", file.NameWithoutExtension, file.Parent.Name);
-                    mediator.Notify(new StartDeployment(Source: file));
-                }
+                Log.Information("Removing deployment of {file} in {type}", file.NameWithoutExtension, file.Parent.Name);
+                mediator.Notify(new StopDeployment(Source: file));
             }
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "DeploymentWatcher");
-            throw;
-        }
+            foreach (var file in changes.Added.Concat(changes.Changed).Files().Where(f => f.Parent.Parent == source))
+            {
+                if (file.Exists)
+                {
+                    await file.WaitTillReadyAsync();
+                }
+                Log.Information("Deploying {file} to {type}", file.NameWithoutExtension, file.Parent.Name);
+                mediator.Notify(new StartDeployment(Source: file));
+            }
+        }, all: true);
+
+        return Task.CompletedTask;
     }
+
+    Task IHostedService.StopAsync(CancellationToken cancellationToken) => cancellation?.CancelAsync() ?? Task.CompletedTask;
 }

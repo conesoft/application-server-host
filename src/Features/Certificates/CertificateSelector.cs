@@ -18,7 +18,7 @@ class CertificateSelector(HostEnvironment environment, IOptions<LetsEncryptConfi
 
     Task IHostedService.StartAsync(CancellationToken cancellationToken)
     {
-        var root = environment.Global.Storage / "certificates";
+        var root = environment.Global.Storage / "host" / "certificates";
         root.Create();
         cancellationTokenSource = root.Live(() =>
         {
