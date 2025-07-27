@@ -10,31 +10,38 @@ namespace Conesoft.Server_Host.Features.ActivePorts.Services;
 
 public class ActivePortsService(Mediator mediator, ActiveProcessesService processes, IHttpClientFactory clients) : IControlActivePorts
 {
-    readonly HttpClient client = clients.CreateClient("shorttimeout");
+    HttpClient Client => clients.CreateClient("shorttimeout");
 
     readonly Dictionary<string, ushort> ports = [];
 
     public IReadOnlyDictionary<string, ushort> Ports => ports;
 
-    async void IControlActivePorts.FindPort(string name)
+    async Task IControlActivePorts.FindPort(string name)
     {
         if (IsValidDomain(name) && processes.Services.TryGetValue(name, out var entry))
         {
             var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             if (await FindHttpsPortOnProcess(entry.Process, timeout.Token).NullIfCancelled() is Connection connection)
             {
-                ports[name] = connection.Local.Port;
+                lock (ports)
+                {
+                    ports[name] = connection.Local.Port;
+                }
                 mediator.Notify(new OnPortFound(name, connection.Local.Port));
             }
         }
     }
 
-    void IControlActivePorts.RemovePort(string name)
+    Task IControlActivePorts.RemovePort(string name)
     {
-        ports.Remove(name);
+        lock (ports)
+        {
+            ports.Remove(name);
+        }
+        return Task.CompletedTask;
     }
 
-    Task<bool> IsHttpsPort(ushort port, CancellationToken ct) => client.SendAsync(new HttpRequestMessage(HttpMethod.Head, $"https://localhost:{port}/"), ct).ContinueWith(t => t.IsCompletedSuccessfully);
+    Task<bool> IsHttpsPort(ushort port, CancellationToken ct) => Client.SendAsync(new HttpRequestMessage(HttpMethod.Head, $"https://localhost:{port}/"), ct).ContinueWith(t => t.IsCompletedSuccessfully, TaskScheduler.Default);
 
     async Task<Connection?> FindHttpsPortOnProcess(Process process, CancellationToken ct = default)
     {

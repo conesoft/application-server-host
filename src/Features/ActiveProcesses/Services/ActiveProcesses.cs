@@ -3,6 +3,8 @@ using Conesoft.Server_Host.Features.ActiveProcesses.Interfaces;
 using Conesoft.Server_Host.Features.ActiveProcesses.Messages;
 using Conesoft.Server_Host.Features.MediatorService.Services;
 using System.Diagnostics;
+using Serilog;
+using Conesoft.Tools;
 
 namespace Conesoft.Server_Host.Features.ActiveProcesses.Services;
 
@@ -41,10 +43,7 @@ public class ActiveProcessesService(Mediator mediator) : IControlActiveProcesses
         {
             services[name] = new(Process: process, Category: category);
             process.EnableRaisingEvents = true;
-            process.Exited += (_,_) =>
-            {
-                (this as IControlActiveProcesses).Kill(name);
-            };
+            process.Exited += (_, _) => (this as IControlActiveProcesses).Kill(name);
             mediator.Notify(new OnNewProcessLaunched(name, process));
         }
     }

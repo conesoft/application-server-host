@@ -36,6 +36,7 @@ class DeploymentWatcher(HostEnvironment info, Mediator mediator) : IHostedServic
                 }
                 Log.Information("Removing deployment of {file} in {type}", file.NameWithoutExtension, file.Parent.Name);
                 mediator.Notify(new StopDeployment(Source: file));
+                Log.Information("Removed deployment of {file} in {type}", file.NameWithoutExtension, file.Parent.Name);
             }
             foreach (var file in changes.Added.Concat(changes.Changed).Files().Where(f => f.Parent.Parent == source))
             {
@@ -45,6 +46,7 @@ class DeploymentWatcher(HostEnvironment info, Mediator mediator) : IHostedServic
                 }
                 Log.Information("Deploying {file} to {type}", file.NameWithoutExtension, file.Parent.Name);
                 mediator.Notify(new StartDeployment(Source: file));
+                Log.Information("Deployed {file} to {type}", file.NameWithoutExtension, file.Parent.Name);
             }
         }, all: true);
 

@@ -3,6 +3,7 @@ using Conesoft.Server_Host.Features.ActivePorts.Interfaces;
 using Conesoft.Server_Host.Features.ActiveProcesses.Interfaces;
 using Conesoft.Server_Host.Features.Deployments.Messages;
 using Conesoft.Server_Host.Features.MediatorService.Interfaces;
+using Conesoft.Tools;
 using Serilog;
 using System.Diagnostics;
 
@@ -25,7 +26,7 @@ class ServiceDeploymentHandler(HostEnvironment environment, IControlActiveProces
 
         if (directory.FilteredFiles("*.exe", allDirectories: false).FirstOrDefault() is Files.File executable)
         {
-            try
+            Safe.Try(() =>
             {
                 var start = new ProcessStartInfo(executable.Path, $"--urls=https://127.0.0.1:0/")
                 {
@@ -33,12 +34,8 @@ class ServiceDeploymentHandler(HostEnvironment environment, IControlActiveProces
                     CreateNoWindow = true
                 };
                 activeProcesses.Launch(name, category, start);
-                activePorts.FindPort(name);
-            }
-            catch (Exception ex)
-            {
-                Log.Error("exception {exception}", ex);
-            }
+                _ = activePorts.FindPort(name);
+            });
         }
     }
 
@@ -48,10 +45,10 @@ class ServiceDeploymentHandler(HostEnvironment environment, IControlActiveProces
         var category = message.Source.Parent.Name;
 
         Log.Information("Stopping {serviceType} Deployment for {message}", category, name);
-        activePorts.RemovePort(name);
+        _ = activePorts.RemovePort(name);
         activeProcesses.Kill(name);
 
         var directory = environment.Global.Live / category / name;
-        directory.Delete();
+        _ = directory.Delete();
     }
 }

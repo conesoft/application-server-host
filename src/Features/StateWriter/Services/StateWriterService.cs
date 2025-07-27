@@ -30,13 +30,12 @@ class StateWriterService(ActiveProcessesService activeProcesses, ActivePortsServ
             {
 
                 var state = new Host(
-                    Services: activeProcesses.Services
+                    Services: [.. activeProcesses.Services
                         .Select(s => new Host.Service(
                             Name: s.Key,
                             Process: s.Value.Process.Id,
                             Port: activePorts.Ports.TryGetValue(s.Key, out var value) ? value : null,
-                            Category: s.Value.Category))
-                        .ToArray()
+                            Category: s.Value.Category))]
                 );
 
                 var file = environment.Global.Storage / "host" / Filename.From("state", "json");

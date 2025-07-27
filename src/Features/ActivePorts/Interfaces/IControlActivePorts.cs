@@ -2,6 +2,6 @@
 
 public interface IControlActivePorts
 {
-    void FindPort(string name);
-    void RemovePort(string name);
+    Task FindPort(string name);
+    Task RemovePort(string name);
 }

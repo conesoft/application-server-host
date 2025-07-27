@@ -9,7 +9,7 @@ using Conesoft.Server_Host.Features.MediatorService.Extensions;
 using Conesoft.Server_Host.Features.ProxyTarget;
 using Conesoft.Server_Host.Features.ProxyTarget.Extensions;
 using Conesoft.Server_Host.Features.StateWriter.Extensions;
-using Conesoft.Server_Host.Features.TrayIcon.Extensions;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,11 +20,10 @@ builder
     })
     .AddHostEnvironmentInfo()
     .AddLoggingService()
-    
+
     .AddMediator()
-    
+
     .AddStateWriter()
-    .AddTrayIcon()
     .UseCertificateSelector<CertificateSelector>()
     .AddProxyTargetSelection<SelectActiveTarget>()
     .AddActiveProcesses()
@@ -42,11 +41,17 @@ builder.Services
 var app = builder.Build();
 
 app.UseLoggingServiceOnRequests();
+app.MapGet("/server/shutdown", (IHostApplicationLifetime lifetime) =>
+{
+    Log.Information("shutting down server");
+    lifetime.StopApplication();
+});
 app.MapProxyTargets();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseRouting();
+
 
 app.MapFallback(() => Results.Text("404 Not Found: Wrong Domain", statusCode: 404));
 
